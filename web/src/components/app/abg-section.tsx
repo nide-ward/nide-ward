@@ -64,31 +64,21 @@ function Interpretation({ latest }: { latest: AbgRowData | null }) {
   if (!latest) {
     return (
       <p className="text-sm text-text-secondary">
-        No blood gas logged yet. Enter the measured values below to calculate anion gap, Winter&rsquo;s pCO2 range, delta ratio and the protocol shift criteria.
+        No blood gas logged yet. Enter the measured values above to calculate acid-base interpretation and Winter&rsquo;s formula compensation.
       </p>
     );
   }
   if (!res) return null;
   const warnings = abgWarnings(res);
-  const summary = shiftSummaryLine(res);
   return (
     <div className="grid gap-3">
-      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-xl bg-surface-muted p-3">
-          <dt className="text-sm text-text-secondary">Anion gap</dt>
-          <dd className={`tnum mt-0.5 ${res.isHighAG ? "text-hue-amber-ink" : ""}`}>
-            {res.ag !== null ? `${res.ag} mmol/L (${res.isHighAG ? "elevated" : "normal"})` : "Unmeasured. Needs Na, Cl and HCO3."}
-          </dd>
-        </div>
-        <div className="rounded-xl bg-surface-muted p-3">
-          <dt className="text-sm text-text-secondary">Winter&rsquo;s pCO2 target</dt>
-          <dd className="tnum mt-0.5">{res.wintersMin !== null ? `${res.wintersMin} to ${res.wintersMax} mmHg` : "Incomplete. Needs HCO3."}</dd>
-        </div>
-        <div className="rounded-xl bg-surface-muted p-3">
-          <dt className="text-sm text-text-secondary">Delta ratio</dt>
-          <dd className="tnum mt-0.5">{res.deltaRatio !== null ? res.deltaRatio : res.ag === null ? "AG unmeasured" : "Not applicable"}</dd>
-        </div>
-      </dl>
+      <div className="rounded-xl bg-surface-muted p-3">
+        <dt className="text-sm text-text-secondary">Winter&rsquo;s Expected pCO2 Target</dt>
+        <dd className="tnum mt-0.5 font-semibold">
+          {res.wintersMin !== null ? `${res.wintersMin} to ${res.wintersMax} mmHg` : "Incomplete. Needs HCO3."}
+        </dd>
+        <span className="mt-1 block text-xs text-text-secondary">Formula: Expected pCO2 = (1.5 × HCO3 + 8) ± 2 mmHg</span>
+      </div>
       {warnings.length > 0 && (
         <ul className="grid gap-1 rounded-xl border border-warning px-3 py-2 text-sm" aria-label="Warnings">
           {warnings.map((w) => (
@@ -98,17 +88,11 @@ function Interpretation({ latest }: { latest: AbgRowData | null }) {
       )}
       <div className="grid gap-1 text-sm">
         <p>
-          <span className="font-medium">Diagnosis:</span> {res.diagnosis} (pH {res.ph ?? "unmeasured"}, HCO3 {res.hco3 ?? "unmeasured"}).
+          <span className="font-medium">Acid-Base Diagnosis:</span> {res.diagnosis} (pH {res.ph ?? "unmeasured"}, HCO3 {res.hco3 ?? "unmeasured"}).
         </p>
         <p>
           <span className="font-medium">Respiratory compensation:</span> {res.respiratoryComp}.
         </p>
-        {res.deltaRatioText && (
-          <p>
-            <span className="font-medium">Delta ratio:</span> {res.deltaRatioText}.
-          </p>
-        )}
-        <p className={`pt-1 font-medium ${summary.ready ? "text-success" : "text-hue-rose-ink"}`}>{summary.text}</p>
       </div>
     </div>
   );
@@ -375,9 +359,17 @@ export function AbgSection({ rows, nowIso }: { rows: AbgRowData[]; nowIso: strin
   const latest = rows.length ? rows[rows.length - 1] : null;
   return (
     <div className="grid gap-4">
+      {chart.allowed("abg.record") && (
+        <Panel hue="sky" title="Log a reading" description="Scheduled draws are 03:00, 07:00, 11:00, 15:00, 19:00 and 23:00.">
+          <EntryForm />
+        </Panel>
+      )}
+      <Panel hue="sky" title={`Blood gas log (${rows.length})`}>
+        <ReadingsTable rows={rows} />
+      </Panel>
       <Panel
         hue="sky"
-        title="Latest interpretation"
+        title="Acid-Base Interpretation & Winter's Formula"
         action={
           rows.length === 0 ? (
             <Pill>Next: on intake</Pill>
@@ -387,14 +379,6 @@ export function AbgSection({ rows, nowIso }: { rows: AbgRowData[]; nowIso: strin
         }
       >
         <Interpretation latest={latest} />
-      </Panel>
-      {chart.allowed("abg.record") && (
-        <Panel hue="sky" title="Log a reading" description="Scheduled draws are 03:00, 07:00, 11:00, 15:00, 19:00 and 23:00.">
-          <EntryForm />
-        </Panel>
-      )}
-      <Panel hue="sky" title={`Blood gas log (${rows.length})`}>
-        <ReadingsTable rows={rows} />
       </Panel>
     </div>
   );

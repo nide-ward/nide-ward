@@ -23,13 +23,6 @@ const RISK_TAGS = [
   "Recent T1DM",
   "Dysuria",
   "SGLT2i",
-  "Type 1 DM",
-  "Type 2 DM",
-  "Hypertension",
-  "CKD Stage 3",
-  "CAD / IHD",
-  "History of recurrent DKA",
-  "Heavy Smoker",
 ];
 
 const ACETONE_OPTIONS = [
@@ -175,9 +168,6 @@ function ChartForm({ data }: { data: OverviewData }) {
           ))}
         </div>
       </div>
-      <Textarea label="Labs and imaging" value={labs} onChange={(e) => setLabs(e.target.value)} rows={2} maxLength={2000} />
-      <Textarea label="Consultations" value={consults} onChange={(e) => setConsults(e.target.value)} rows={2} maxLength={2000} />
-      <Textarea label="Follow-up and discharge plan" value={plan} onChange={(e) => setPlan(e.target.value)} rows={3} maxLength={2000} />
       <InlineError>{localError ?? error}</InlineError>
       {conflict && <p className="text-sm text-text-secondary">Use the banner above to load the latest chart, then repeat your edit.</p>}
       <div className="flex items-center gap-3">
@@ -195,7 +185,7 @@ export function OverviewSection({ data, hue }: { data: OverviewData; hue: Hue })
   return (
     <div className="grid gap-4">
       <BedsideCard data={data} hue={hue} />
-      <Panel hue={hue} title="Patient and plan">
+      <Panel hue={hue} title="Patient admission details">
         {chart.allowed("chart.edit") ? (
           <ChartForm data={data} />
         ) : (
@@ -204,11 +194,6 @@ export function OverviewSection({ data, hue }: { data: OverviewData; hue: Hue })
             <Definition label="Admitted (Cairo)">{toCairoInputValue(data.admittedAt).replace("T", " ")}</Definition>
             <Definition label="Primary diagnosis">{isBlank(data.diagnosis) ? <span className="text-text-muted">{NO_DIAGNOSIS}</span> : data.diagnosis}</Definition>
             <Definition label="Risk factors">{data.riskFactors}</Definition>
-            <Definition label="Labs and imaging">{data.labsImaging}</Definition>
-            <Definition label="Consultations">{data.consultations}</Definition>
-            <div className="sm:col-span-2">
-              <Definition label="Follow-up and discharge plan">{data.followupPlan}</Definition>
-            </div>
           </dl>
         )}
       </Panel>

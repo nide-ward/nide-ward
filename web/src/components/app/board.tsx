@@ -109,13 +109,6 @@ function BedCard({ bed, ward, now, canAdmit, onAdmit }: CardProps) {
         )}
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {analysis?.isShiftReady ? (
-          <Pill hue="teal">Shift to SubQ (pH 7.35 or above)</Pill>
-        ) : analysis && analysis.ph !== null && analysis.ph >= 7.35 && !analysis.isTrusted ? (
-          <Pill hue="amber">pH 7.35 or above, untrusted</Pill>
-        ) : analysis ? (
-          <span className="text-xs text-text-secondary">Q2H IM protocol</span>
-        ) : null}
         <Pill hue="purple">Lantus {a.basalUnits}U</Pill>
         {a.mediaCount > 0 && <Pill hue="cyan">{a.mediaCount} lab photo{a.mediaCount === 1 ? "" : "s"}</Pill>}
       </div>

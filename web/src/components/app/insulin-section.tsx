@@ -21,7 +21,7 @@ export interface InsulinData {
 export function InsulinSection({ data }: { data: InsulinData }) {
   const chart = useChart();
   const { run, pending, error } = useAction();
-  const [v, setV] = useState({ basal: data.basalUnits, b: data.breakfastUnits, l: data.lunchUnits, d: data.dinnerUnits });
+  const [v, setV] = useState({ basal: data.basalUnits, q2h: 0, b: data.breakfastUnits, l: data.lunchUnits, d: data.dinnerUnits });
   const [saved, setSaved] = useState(false);
   const editable = chart.allowed("insulin.edit");
 
@@ -29,6 +29,7 @@ export function InsulinSection({ data }: { data: InsulinData }) {
     <Panel title="Insulin regimen" description={`${data.basalLabel}. Last changed by ${data.updatedBy}.`}>
       <p className="tnum mb-4 rounded-xl bg-surface-muted px-3 py-2 text-sm" aria-live="polite">
         {regimenSummary({ basalUnits: v.basal, breakfastUnits: v.b, lunchUnits: v.l, dinnerUnits: v.d })}
+        {v.q2h > 0 && ` | Actrapid Q2H: ${v.q2h}U`}
       </p>
       <form
         className="grid gap-4"
@@ -52,9 +53,14 @@ export function InsulinSection({ data }: { data: InsulinData }) {
           );
         }}
       >
+        <Panel hue="sky" title="Actrapid every 2 hours (Q2H)" description="Short-acting regular insulin administered every 2 hours.">
+          <div className="max-w-xs">
+            <NumberField label="Actrapid every 2 hours" suffix=" U" min={0} max={500} step={0.5} value={v.q2h} onValueChange={(x) => setV((s) => ({ ...s, q2h: x }))} disabled={!editable} />
+          </div>
+        </Panel>
         <Panel hue="purple" title="Basal insulin" description="Lantus (glargine), once a day at 11:00 PM.">
           <div className="max-w-xs">
-          <NumberField label="Basal Lantus at 11:00 PM" suffix=" U" min={0} max={500} step={0.5} value={v.basal} onValueChange={(x) => setV((s) => ({ ...s, basal: x }))} disabled={!editable} />
+            <NumberField label="Basal Lantus at 11:00 PM" suffix=" U" min={0} max={500} step={0.5} value={v.basal} onValueChange={(x) => setV((s) => ({ ...s, basal: x }))} disabled={!editable} />
           </div>
         </Panel>
         <Panel hue="amber" title="Bolus insulin" description="Actrapid before each meal.">

@@ -16,11 +16,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
     .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 
     @keyframes scanLaser {
@@ -148,36 +150,36 @@
 
     <!-- Floor Navigation Tabs -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-      <button id="tab-female" class="floor-tab px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between border bg-rose-600 text-white border-rose-600 shadow-xs" data-floor="female">
-        <div class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-white"></span>
-          <span>Female Ward</span>
+      <button id="tab-female" class="floor-tab px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between border bg-rose-600 text-white border-rose-600 shadow-xs min-w-0" data-floor="female">
+        <div class="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
+          <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white shrink-0"></span>
+          <span class="truncate">Female Ward</span>
         </div>
-        <span class="px-1.5 py-0.5 rounded-md font-bold bg-white/20 text-white text-[11px]" id="badge-female">0/10</span>
+        <span class="px-1.5 py-0.5 rounded-md font-bold bg-white/20 text-white text-[11px] shrink-0 ml-1" id="badge-female">0/10</span>
       </button>
 
-      <button id="tab-male" class="floor-tab px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between border bg-white text-slate-700 border-slate-200 hover:bg-slate-50" data-floor="male">
-        <div class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-          <span>Male Ward</span>
+      <button id="tab-male" class="floor-tab px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 min-w-0" data-floor="male">
+        <div class="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
+          <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+          <span class="truncate">Male Ward</span>
         </div>
-        <span class="px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700 text-[11px]" id="badge-male">0/10</span>
+        <span class="px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700 text-[11px] shrink-0 ml-1" id="badge-male">0/10</span>
       </button>
 
-      <button id="tab-paid" class="floor-tab px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between border bg-white text-slate-700 border-slate-200 hover:bg-slate-50" data-floor="paid">
-        <div class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-          <span>Paid Ward</span>
+      <button id="tab-paid" class="floor-tab px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 min-w-0" data-floor="paid">
+        <div class="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
+          <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-indigo-500 shrink-0"></span>
+          <span class="truncate">Paid Ward</span>
         </div>
-        <span class="px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700 text-[11px]" id="badge-paid">0/6</span>
+        <span class="px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700 text-[11px] shrink-0 ml-1" id="badge-paid">0/6</span>
       </button>
 
-      <button id="tab-overflow" class="floor-tab px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between border bg-white text-slate-700 border-slate-200 hover:bg-slate-50" data-floor="overflow">
-        <div class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-          <span>Additional / Overflow</span>
+      <button id="tab-overflow" class="floor-tab px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 min-w-0" data-floor="overflow">
+        <div class="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
+          <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+          <span class="truncate">Overflow</span>
         </div>
-        <span class="px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700 text-[11px]" id="badge-overflow">0/6</span>
+        <span class="px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700 text-[11px] shrink-0 ml-1" id="badge-overflow">0/6</span>
       </button>
     </div>
 
@@ -505,36 +507,30 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
         </div>
       </div>
 
-      <!-- Live Clinical Protocol Status Bar -->
-      <div id="modal-protocol-guidance" class="px-5 py-2.5 bg-slate-100 border-b border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div id="protocol-fluid-pill" class="flex items-center space-x-1.5 font-medium text-slate-700">
-          <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-          <span>Fluid Infusion: Assessing status...</span>
-        </div>
-        <div id="protocol-insulin-pill" class="flex items-center space-x-1.5 font-medium text-slate-700">
-          <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-          <span>Insulin Protocol: Assessing pH...</span>
-        </div>
+      <!-- Live Clinical Protocol Status Bar (Hidden) -->
+      <div id="modal-protocol-guidance" class="hidden">
+        <div id="protocol-fluid-pill"></div>
+        <div id="protocol-insulin-pill"></div>
       </div>
 
       <!-- Navigation Tabs Inside Modal -->
-      <div class="px-5 border-b border-slate-200 bg-white flex items-center space-x-1 sm:space-x-3 overflow-x-auto">
-        <button type="button" class="modal-nav-tab py-2.5 px-2 border-b-2 font-bold text-xs tracking-wide transition border-teal-600 text-teal-700" data-section="section-demographics">
+      <div class="px-3 sm:px-5 border-b border-slate-200 bg-white flex items-center space-x-1 sm:space-x-3 overflow-x-auto no-scrollbar">
+        <button type="button" class="modal-nav-tab py-2.5 px-2 border-b-2 font-bold text-xs tracking-wide transition border-teal-600 text-teal-700 whitespace-nowrap shrink-0" data-section="section-demographics">
           1. Admission & Info
         </button>
-        <button type="button" class="modal-nav-tab py-2.5 px-2 border-b-2 font-semibold text-xs tracking-wide transition border-transparent text-slate-500 hover:text-slate-800" data-section="section-abg">
+        <button type="button" class="modal-nav-tab py-2.5 px-2 border-b-2 font-semibold text-xs tracking-wide transition border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap shrink-0" data-section="section-abg">
           2. Blood Gases (ABG)
         </button>
-        <button type="button" class="modal-nav-tab py-2.5 px-2 border-b-2 font-semibold text-xs tracking-wide transition border-transparent text-slate-500 hover:text-slate-800" data-section="section-insulin">
+        <button type="button" class="modal-nav-tab py-2.5 px-2 border-b-2 font-semibold text-xs tracking-wide transition border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap shrink-0" data-section="section-insulin">
           3. Insulin Management
         </button>
-        <button type="button" class="modal-nav-tab py-2.5 px-2 border-b-2 font-semibold text-xs tracking-wide transition border-transparent text-slate-500 hover:text-slate-800" data-section="section-workup">
-          4. Workup & Plan
+        <button type="button" class="modal-nav-tab py-2.5 px-2 border-b-2 font-semibold text-xs tracking-wide transition border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap shrink-0" data-section="section-workup">
+          4. Plan
         </button>
       </div>
 
       <!-- Modal Body -->
-      <form id="patient-form" class="p-5 overflow-y-auto space-y-5 flex-1 custom-scrollbar">
+      <form id="patient-form" class="p-3.5 sm:p-5 overflow-y-auto space-y-4 sm:space-y-5 flex-1 custom-scrollbar">
         <input type="hidden" id="form-bed-id">
 
         <!-- SECTION 1: ADMISSION & DEMOGRAPHICS -->
@@ -571,50 +567,13 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
               <button type="button" class="btn-risk-tag text-[10px] bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 px-2 py-0.5 rounded-md font-semibold transition" data-tag="Recent T1DM">+ Recent T1DM</button>
               <button type="button" class="btn-risk-tag text-[10px] bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md font-semibold transition" data-tag="Dysuria">+ Dysuria</button>
               <button type="button" class="btn-risk-tag text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-semibold transition" data-tag="SGLT2i">+ SGLT2i</button>
-              <button type="button" class="btn-risk-tag text-[10px] bg-slate-100 hover:bg-teal-50 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md transition" data-tag="Type 1 DM">+ Type 1 DM</button>
-              <button type="button" class="btn-risk-tag text-[10px] bg-slate-100 hover:bg-teal-50 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md transition" data-tag="Type 2 DM">+ Type 2 DM</button>
-              <button type="button" class="btn-risk-tag text-[10px] bg-slate-100 hover:bg-teal-50 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md transition" data-tag="Hypertension">+ HTN</button>
-              <button type="button" class="btn-risk-tag text-[10px] bg-slate-100 hover:bg-teal-50 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md transition" data-tag="CKD Stage 3">+ CKD</button>
-              <button type="button" class="btn-risk-tag text-[10px] bg-slate-100 hover:bg-teal-50 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md transition" data-tag="CAD / IHD">+ CAD</button>
-              <button type="button" class="btn-risk-tag text-[10px] bg-slate-100 hover:bg-teal-50 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md transition" data-tag="History of recurrent DKA">+ Recurrent DKA</button>
-              <button type="button" class="btn-risk-tag text-[10px] bg-slate-100 hover:bg-teal-50 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md transition" data-tag="Heavy Smoker">+ Smoker</button>
             </div>
-            <textarea id="patient-risk-factors" rows="2" placeholder="e.g. Type 1 DM, Hypertension, CKD Stage 3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-teal-500"></textarea>
+            <textarea id="patient-risk-factors" rows="2" placeholder="e.g. Missed doses, Dysuria, Infection" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-teal-500"></textarea>
           </div>
         </div>
 
         <!-- SECTION 2: WHOLE BLOOD GASES & AI-ASSISTED ABG READER -->
         <div id="section-abg" class="modal-section space-y-4 hidden">
-          
-          <!-- AI Acid-Base Diagnostic Output -->
-          <div id="ai-abg-card" class="bg-indigo-50/80 border border-indigo-200 rounded-xl p-3.5 text-xs">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="font-bold text-indigo-950 flex items-center space-x-1.5">
-                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                <span>AI-Assisted ABG Interpretation</span>
-              </span>
-              <span id="ai-abg-timestamp" class="text-[10px] font-mono text-indigo-700">Latest Reading</span>
-            </div>
-            <div id="ai-abg-summary" class="text-indigo-900 font-medium leading-relaxed">
-              Log an ABG reading below to automatically calculate Anion Gap, Winter's pCO2 compensation, Delta ratio, and protocol shift criteria.
-            </div>
-            <!-- Clinical Warning & Incomplete Data Banner -->
-            <div id="ai-abg-warning-box" class="mt-2.5 p-2 rounded-lg border text-[11px] font-semibold hidden"></div>
-            <div id="ai-abg-metrics" class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-indigo-200/70 text-[11px] hidden">
-              <div class="bg-white/80 p-1.5 rounded border border-indigo-100">
-                <span class="text-slate-500 block text-[10px]">Anion Gap (AG)</span>
-                <b id="calc-ag" class="text-slate-800">--</b>
-              </div>
-              <div class="bg-white/80 p-1.5 rounded border border-indigo-100">
-                <span class="text-slate-500 block text-[10px]">Winter's Expected pCO2</span>
-                <b id="calc-winters" class="text-slate-800">--</b>
-              </div>
-              <div class="bg-white/80 p-1.5 rounded border border-indigo-100">
-                <span class="text-slate-500 block text-[10px]">Delta Ratio (ΔAG/ΔHCO3)</span>
-                <b id="calc-delta" class="text-slate-800">--</b>
-              </div>
-            </div>
-          </div>
 
           <!-- New ABG Data Entry Form -->
           <div class="bg-sky-50/60 border border-sky-200 rounded-xl p-3.5">
@@ -730,18 +689,57 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
               </table>
             </div>
           </div>
+
+          <!-- AI Acid-Base Diagnostic Output (Interpretation & Winter's Formula at Bottom) -->
+          <div id="ai-abg-card" class="bg-indigo-50/80 border border-indigo-200 rounded-xl p-3.5 text-xs space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-indigo-950 flex items-center space-x-1.5">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <span>AI Acid-Base Interpretation & Winter's Formula</span>
+              </span>
+              <span id="ai-abg-timestamp" class="text-[10px] font-mono text-indigo-700">Latest Reading</span>
+            </div>
+            <div id="ai-abg-summary" class="text-indigo-900 font-medium leading-relaxed bg-white/70 p-2.5 rounded-lg border border-indigo-100">
+              Log an ABG reading above to see automated acid-base interpretation and Winter's formula compensation.
+            </div>
+            <!-- Clinical Warning & Incomplete Data Banner -->
+            <div id="ai-abg-warning-box" class="p-2 rounded-lg border text-[11px] font-semibold hidden"></div>
+            <div id="ai-abg-metrics" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+              <div class="bg-white/90 p-2.5 rounded-lg border border-indigo-200">
+                <span class="text-slate-600 block text-[10px] font-bold uppercase tracking-wider">Winter's Expected pCO2 Target</span>
+                <div class="flex items-baseline space-x-2 mt-0.5">
+                  <b id="calc-winters" class="text-slate-900 text-sm font-extrabold">--</b>
+                </div>
+                <span class="text-[10px] text-slate-500 block mt-1">Formula: Expected pCO2 = (1.5 × HCO3 + 8) ± 2 mmHg</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- SECTION 3: MANAGEMENT & INSULIN DOSES & DRUG SHEET -->
         <div id="section-insulin" class="modal-section space-y-4 hidden">
           
-          <!-- Ward Clinical Shift Guidelines -->
-          <div class="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-950 flex flex-col sm:flex-row justify-between gap-2">
-            <div>
-              <b class="text-emerald-800">Fluid Protocol:</b> Stop IV fluid infusion when urine acetone is nil and no K+ replacement is required.
+          <!-- Insulin Actrapid Every 2 Hours (Q2H) Box -->
+          <div class="bg-sky-50/70 border border-sky-200 rounded-xl p-3.5">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <h4 class="text-xs font-bold text-sky-950 uppercase tracking-wider">Insulin Actrapid: Every 2 Hours (Q2H)</h4>
+                <p class="text-[10px] text-sky-800">Regular short-acting insulin administered every 2 hours</p>
+              </div>
+              <span class="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded">Every 2 Hours</span>
             </div>
-            <div>
-              <b class="text-emerald-800">Insulin Shift:</b> Discontinue Q2H IM insulin and shift to Basal-Bolus regimen when pH &ge; 7.35.
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="insulin-actrapid-2h-units">Actrapid Q2H Dose (Units)</label>
+                <div class="relative">
+                  <input type="number" min="0" step="0.5" id="insulin-actrapid-2h-units" placeholder="e.g. 5" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-sky-500 focus:outline-none font-bold">
+                  <span class="absolute right-3 top-2 text-[11px] text-slate-400 font-bold">Units</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="insulin-actrapid-2h-notes">Administration Schedule / Notes</label>
+                <input type="text" id="insulin-actrapid-2h-notes" placeholder="e.g. Regular insulin every 2h IM/SC" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-sky-500 focus:outline-none">
+              </div>
             </div>
           </div>
 
@@ -750,7 +748,6 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             <div class="flex items-center justify-between mb-2">
               <div>
                 <h4 class="text-xs font-bold text-purple-950 uppercase tracking-wider">Basal Insulin: Glargine (Lantus) at 11:00 PM</h4>
-                <p class="text-[10px] text-purple-800">Fixed hospital ward protocol — Administered daily at 23:00</p>
               </div>
               <span class="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded">Fixed 11:00 PM</span>
             </div>
@@ -880,11 +877,22 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
           </div>
         </div>
 
-        <!-- SECTION 4: WORKUP, CONSULTS & FOLLOW-UP PLAN -->
+        <!-- SECTION 4: PLAN, FOLLOW-UP, LABS, CONSULTS & MEDIA -->
         <div id="section-workup" class="modal-section space-y-4 hidden">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-labs-imaging">Labs & Imaging Ordered</label>
-            <textarea id="patient-labs-imaging" rows="2" placeholder="e.g. CBC, Serum Creatinine & Electrolytes, Chest X-ray" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-followup-plan">Plan & Follow-up (Discharge Plan)</label>
+            <textarea id="patient-followup-plan" rows="3" placeholder="e.g. Shift to subcutaneous insulin once anion gap closes and acetone is negative. Discontinue IV fluids." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-labs-imaging">Labs & Imaging Ordered</label>
+              <textarea id="patient-labs-imaging" rows="2" placeholder="e.g. CBC, Serum Creatinine & Electrolytes, Chest X-ray" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-consultations">Specialist Consultations Needed</label>
+              <textarea id="patient-consultations" rows="2" placeholder="e.g. Endocrinology, Nephrology" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
+            </div>
           </div>
 
           <!-- Lab & Investigation Media Upload Gallery -->
@@ -904,16 +912,6 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             </div>
             <div id="lab-media-gallery" class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1"></div>
             <p id="lab-media-empty-hint" class="text-[11px] text-slate-400 italic text-center py-2">No lab media attached yet. Tap button above to photograph report or attach scan.</p>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-consultations">Specialist Consultations Needed</label>
-            <input type="text" id="patient-consultations" placeholder="e.g. Endocrinology (DKA protocol), Nephrology" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-followup-plan">Follow-up & Discharge Plan</label>
-            <textarea id="patient-followup-plan" rows="3" placeholder="e.g. Transition to subcutaneous insulin once anion gap normalizes and acetone is negative. Discontinue IV fluids." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"></textarea>
           </div>
         </div>
 
@@ -2233,13 +2231,9 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             ? `<span class="text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span><span>${escapeHTML(abgStat.text)}</span></span>`
             : `<span class="text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span>${escapeHTML(abgStat.text)}</span></span>`;
 
-          let protocolShiftBadge = '';
-          if (analysis && analysis.isShiftReady) {
-            protocolShiftBadge = `<span class="text-[9px] font-bold bg-teal-50 text-teal-800 border border-teal-200 px-1.5 py-0.5 rounded-md">✓ Shift to SubQ (pH≥7.35)</span>`;
-          } else if (analysis && analysis.ph !== null && analysis.ph >= 7.35 && !analysis.isTrusted) {
-            protocolShiftBadge = `<span class="text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded-md">pH≥7.35 (Untrusted)</span>`;
-          } else if (analysis) {
-            protocolShiftBadge = `<span class="text-[9px] text-slate-500 font-medium">Q2H IM Protocol</span>`;
+          let q2hBadge = '';
+          if (patient.insulinActrapidQ2H && patient.insulinActrapidQ2H.units) {
+            q2hBadge = `<span class="font-semibold px-1.5 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200">Actrapid Q2H ${escapeHTML(String(patient.insulinActrapidQ2H.units))}U</span>`;
           }
 
           let abgSnippet = '';
@@ -2276,7 +2270,7 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
               <p class="text-xs text-slate-700 mt-1 line-clamp-1 font-medium">${escapeHTML(patient.diagnosis)}</p>
               ${abgSnippet}
               <div class="mt-2 flex items-center justify-between text-[10px]">
-                ${protocolShiftBadge}
+                ${q2hBadge || '<span class="text-slate-400">Actrapid --</span>'}
                 <span class="font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">Lantus ${escapeHTML(basalUnits)}</span>
               </div>
             </div>
@@ -2381,7 +2375,16 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
 
         document.getElementById('insulin-basal-units').value = patient.insulinBasal?.units || '';
         document.getElementById('insulin-basal-type').value = "Lantus (Glargine) at 11:00 PM";
+        const q2hInput = document.getElementById('insulin-actrapid-2h-units');
+        if (q2hInput) q2hInput.value = '';
+        const q2hNotes = document.getElementById('insulin-actrapid-2h-notes');
+        if (q2hNotes) q2hNotes.value = 'Regular insulin every 2h IM/SC';
         
+        const q2hInput = document.getElementById('insulin-actrapid-2h-units');
+        if (q2hInput) q2hInput.value = (patient.insulinActrapidQ2H?.units !== undefined && patient.insulinActrapidQ2H?.units !== null) ? patient.insulinActrapidQ2H.units : '';
+        const q2hNotes = document.getElementById('insulin-actrapid-2h-notes');
+        if (q2hNotes) q2hNotes.value = patient.insulinActrapidQ2H?.notes || 'Regular insulin every 2h IM/SC';
+
         document.getElementById('bolus-breakfast-units').value = patient.insulinBolus?.breakfast?.units || '';
         const bNotes = document.getElementById('bolus-breakfast-notes');
         if (bNotes) bNotes.value = patient.insulinBolus?.breakfast?.notes || 'Actrapid before meal (9:00 AM)';
@@ -2421,6 +2424,10 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
         document.getElementById('patient-admission-date').value = getCairoISOTimeString();
         document.getElementById('abg-log-timestamp').value = getCairoISOTimeString();
         document.getElementById('insulin-basal-type').value = "Lantus (Glargine) at 11:00 PM";
+        const q2hInput = document.getElementById('insulin-actrapid-2h-units');
+        if (q2hInput) q2hInput.value = '';
+        const q2hNotes = document.getElementById('insulin-actrapid-2h-notes');
+        if (q2hNotes) q2hNotes.value = 'Regular insulin every 2h IM/SC';
         
         activeModalABGList = [];
         activeModalDrugList = [];
@@ -2450,9 +2457,9 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
 
       document.querySelectorAll('.modal-nav-tab').forEach(tab => {
         if (tab.dataset.section === sectionId) {
-          tab.className = "modal-nav-tab py-2.5 px-2 border-b-2 font-bold text-xs tracking-wide transition border-teal-600 text-teal-700";
+          tab.className = "modal-nav-tab py-2.5 px-2 border-b-2 font-bold text-xs tracking-wide transition border-teal-600 text-teal-700 whitespace-nowrap shrink-0";
         } else {
-          tab.className = "modal-nav-tab py-2.5 px-2 border-b-2 font-semibold text-xs tracking-wide transition border-transparent text-slate-500 hover:text-slate-800";
+          tab.className = "modal-nav-tab py-2.5 px-2 border-b-2 font-semibold text-xs tracking-wide transition border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap shrink-0";
         }
       });
     }
@@ -2473,20 +2480,27 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
     }
 
     function updateRegimenSummaryText() {
-      const basal = document.getElementById('insulin-basal-units').value || '0';
-      const b = document.getElementById('bolus-breakfast-units').value || '0';
-      const l = document.getElementById('bolus-lunch-units').value || '0';
-      const d = document.getElementById('bolus-dinner-units').value || '0';
-      document.getElementById('regimen-summary-text').textContent = `Lantus (11 PM): ${basal}U | Actrapid: B(9 AM) ${b}U • L(3 PM) ${l}U • D(9 PM) ${d}U`;
+      const basal = document.getElementById('insulin-basal-units')?.value || '0';
+      const q2h = document.getElementById('insulin-actrapid-2h-units')?.value || '0';
+      const b = document.getElementById('bolus-breakfast-units')?.value || '0';
+      const l = document.getElementById('bolus-lunch-units')?.value || '0';
+      const d = document.getElementById('bolus-dinner-units')?.value || '0';
+      const summaryEl = document.getElementById('regimen-summary-text');
+      if (summaryEl) {
+        summaryEl.textContent = (q2h && q2h !== '0')
+          ? `Lantus (11 PM): ${basal}U | Actrapid Q2H: ${q2h}U | Actrapid: B(9 AM) ${b}U • L(3 PM) ${l}U • D(9 PM) ${d}U`
+          : `Lantus (11 PM): ${basal}U | Actrapid: B(9 AM) ${b}U • L(3 PM) ${l}U • D(9 PM) ${d}U`;
+      }
     }
 
     function updateProtocolGuidance() {
-      const acetone = document.getElementById('patient-urine-acetone').value;
+      const acetone = document.getElementById('patient-urine-acetone')?.value;
       const latestABG = (activeModalABGList.length > 0) ? activeModalABGList[activeModalABGList.length - 1] : null;
       const analysis = analyzeABG(latestABG);
 
       const fluidPill = document.getElementById('protocol-fluid-pill');
       const insulinPill = document.getElementById('protocol-insulin-pill');
+      if (!fluidPill || !insulinPill) return;
 
       const kVal = latestABG ? parseMeasurement(latestABG.k) : null;
       const isAcetoneNil = (acetone === 'Negative');
@@ -2495,84 +2509,67 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       if (isAcetoneNil && isKStable) {
         fluidPill.innerHTML = `
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span class="text-emerald-800 font-bold">Fluid Protocol: STOP IV Fluids (Acetone is Nil & K+ ≥ 4.0 mEq/L)</span>
+          <span class="text-emerald-800 font-bold">Fluid: Stop IV Fluids</span>
         `;
       } else {
         const kDisplay = kVal !== null ? `${kVal} mEq/L` : 'Unmeasured';
         fluidPill.innerHTML = `
           <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-          <span class="text-amber-900 font-medium">Fluid Protocol: Continue IV Hydration (Acetone: ${escapeHTML(acetone)}, K+: ${kDisplay})</span>
+          <span class="text-amber-900 font-medium">Fluid: Continue IV (Acetone: ${escapeHTML(acetone)}, K+: ${kDisplay})</span>
         `;
       }
 
-      // Protocol Shift: Discontinue Q2H IM insulin and shift to Basal-Bolus when pH >= 7.35 AND trusted
       if (analysis && analysis.isShiftReady) {
         insulinPill.innerHTML = `
           <span class="w-2 h-2 rounded-full bg-teal-500"></span>
-          <span class="text-teal-900 font-bold">Insulin Shift: Safe to Shift to SubQ Basal-Bolus (pH ${analysis.ph} &ge; 7.35 confirmed)</span>
-        `;
-      } else if (analysis && analysis.ph !== null && analysis.ph >= 7.35 && !analysis.isTrusted) {
-        insulinPill.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-          <span class="text-rose-900 font-bold">Insulin Shift Halted: pH ≥ 7.35 but ABG panel is incomplete or inconsistent. Maintain IM insulin!</span>
+          <span class="text-teal-900 font-bold">Insulin: SubQ Basal-Bolus (pH ${analysis.ph} ≥ 7.35)</span>
         `;
       } else if (analysis && analysis.ph !== null) {
         insulinPill.innerHTML = `
           <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-          <span class="text-rose-900 font-medium">Insulin Protocol: Maintain Q2H IM Insulin (pH ${analysis.ph} &lt; 7.35)</span>
+          <span class="text-rose-900 font-medium">Insulin: Q2H Regular Insulin (pH ${analysis.ph})</span>
         `;
       } else {
         insulinPill.innerHTML = `
           <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-          <span class="text-slate-600">Insulin Protocol: Awaiting ABG to evaluate pH</span>
+          <span class="text-slate-600">Insulin: Awaiting ABG</span>
         `;
       }
     }
 
-    // AI ABG Reader with strict clinical warning disclosure and incomplete calculation badges
+    // AI ABG Reader with interpretation and Winter's formula
     function updateAIABGReader() {
       const summaryEl = document.getElementById('ai-abg-summary');
       const metricsEl = document.getElementById('ai-abg-metrics');
       const timeEl = document.getElementById('ai-abg-timestamp');
       const warningBox = document.getElementById('ai-abg-warning-box');
 
+      if (!summaryEl) return;
+
       if (activeModalABGList.length === 0) {
-        summaryEl.textContent = "No blood gas records logged yet. Enter measured parameters below to calculate Anion Gap, Winter's pCO2 compensation, Delta ratio, and protocol shift criteria.";
-        metricsEl.classList.add('hidden');
+        summaryEl.textContent = "No blood gas records logged yet. Enter measured parameters above to calculate acid-base interpretation and Winter's formula compensation.";
+        if (metricsEl) metricsEl.classList.add('hidden');
         if (warningBox) warningBox.classList.add('hidden');
-        timeEl.textContent = "No Data";
+        if (timeEl) timeEl.textContent = "No Data";
         return;
       }
 
       const latest = activeModalABGList[activeModalABGList.length - 1];
       const res = analyzeABG(latest);
-      timeEl.textContent = latest.time;
+      if (timeEl) timeEl.textContent = latest.time;
 
       if (!res) return;
 
-      // Update Metric Cards
-      const agEl = document.getElementById('calc-ag');
-      if (res.ag !== null) {
-        agEl.textContent = `${res.ag} mmol/L (${res.isHighAG ? 'Elevated' : 'Normal'})`;
-        agEl.className = res.isHighAG ? 'text-amber-800 font-bold' : 'text-slate-800';
-      } else {
-        agEl.innerHTML = `<span class="text-amber-700 font-bold text-[10px]">Unmeasured</span><span class="block text-[9px] text-slate-400 font-normal">Missing Na+, Cl-, or HCO3</span>`;
-      }
-
+      // Update Winter's Formula Metric Card
       const wintersEl = document.getElementById('calc-winters');
-      if (res.wintersMin !== null && res.wintersMax !== null) {
-        wintersEl.textContent = `${res.wintersMin} – ${res.wintersMax} mmHg`;
-      } else {
-        wintersEl.innerHTML = `<span class="text-slate-500 text-[10px]">Incomplete (Missing HCO3-)</span>`;
+      if (wintersEl) {
+        if (res.wintersMin !== null && res.wintersMax !== null) {
+          wintersEl.textContent = `${res.wintersMin} – ${res.wintersMax} mmHg`;
+        } else {
+          wintersEl.innerHTML = `<span class="text-slate-500 text-[10px]">Incomplete (Missing HCO3-)</span>`;
+        }
       }
-
-      const deltaEl = document.getElementById('calc-delta');
-      if (res.deltaRatio !== null) {
-        deltaEl.textContent = `${res.deltaRatio}`;
-      } else {
-        deltaEl.textContent = res.ag === null ? "AG unmeasured" : "N/A or normal AG";
-      }
-      metricsEl.classList.remove('hidden');
+      if (metricsEl) metricsEl.classList.remove('hidden');
 
       // Warning Box Handling
       const warnings = [];
@@ -2583,25 +2580,17 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       if (warningBox) {
         if (warnings.length > 0) {
           warningBox.innerHTML = warnings.map(w => `<div class="py-0.5">• ${escapeHTML(w)}</div>`).join('');
-          warningBox.className = "mt-2.5 p-2 rounded-lg border text-[11px] font-semibold bg-amber-50 text-amber-900 border-amber-300";
+          warningBox.className = "p-2 rounded-lg border text-[11px] font-semibold bg-amber-50 text-amber-900 border-amber-300";
           warningBox.classList.remove('hidden');
         } else {
           warningBox.classList.add('hidden');
         }
       }
 
-      let guidanceText = `
+      const guidanceText = `
         <div class="space-y-1">
-          <div><b>Diagnosis:</b> <span class="text-slate-900">${escapeHTML(res.diagnosis)}</span> (pH: ${res.ph !== null ? res.ph : 'unmeasured'}, HCO3: ${res.hco3 !== null ? res.hco3 : 'unmeasured'}).</div>
+          <div><b>Acid-Base Diagnosis:</b> <span class="text-slate-900 font-semibold">${escapeHTML(res.diagnosis)}</span> (pH: ${res.ph !== null ? res.ph : 'unmeasured'}, HCO3: ${res.hco3 !== null ? res.hco3 : 'unmeasured'}).</div>
           <div><b>Respiratory Compensation:</b> ${escapeHTML(res.respiratoryComp)}.</div>
-          ${res.deltaRatioText ? `<div><b>Delta Ratio Evaluation:</b> ${escapeHTML(res.deltaRatioText)}.</div>` : ''}
-          <div class="pt-1 font-semibold ${res.isShiftReady ? 'text-teal-800' : 'text-rose-800'}">
-            ${res.isShiftReady 
-              ? '✓ Verified pH ≥ 7.35: Patient meets criteria to discontinue Q2H IM regular insulin and transition to subcutaneous basal-bolus regimen.' 
-              : (res.ph !== null && res.ph >= 7.35 && !res.isTrusted 
-                  ? '⚡ pH is ≥ 7.35 but clinical calculation is untrusted/incomplete. DO NOT shift insulin until repeat ABG confirms resolution.' 
-                  : '⚡ pH is below 7.35: Continue Q2H intramuscular insulin protocol until acidosis resolves.')}
-          </div>
         </div>
       `;
 
@@ -3724,7 +3713,7 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       });
     });
 
-    ['insulin-basal-units', 'bolus-breakfast-units', 'bolus-lunch-units', 'bolus-dinner-units'].forEach(id => {
+    ['insulin-basal-units', 'insulin-actrapid-2h-units', 'bolus-breakfast-units', 'bolus-lunch-units', 'bolus-dinner-units'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', updateRegimenSummaryText);
     });
@@ -3743,6 +3732,10 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
         admissionDate: document.getElementById('patient-admission-date').value,
         diagnosis: document.getElementById('patient-diagnosis').value.trim(),
         riskFactors: document.getElementById('patient-risk-factors').value.trim(),
+        insulinActrapidQ2H: {
+          units: parseFloat(document.getElementById('insulin-actrapid-2h-units')?.value) || 0,
+          notes: document.getElementById('insulin-actrapid-2h-notes')?.value || 'Regular insulin every 2h IM/SC'
+        },
         insulinBasal: {
           units: parseFloat(document.getElementById('insulin-basal-units').value) || 0,
           type: "Lantus (Glargine) at 11:00 PM"
@@ -3793,39 +3786,99 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       const clean = text.replace(/,/g, '.');
       const results = {};
 
-      const phMatch = clean.match(/\b(?:p[Hh]|PH)\s*[:=]?\s*([67]\.\d{1,3})\b/) ||
-                      clean.match(/\b([67]\.\d{2,3})\b/);
-      if (phMatch) results.ph = parseFloat(phMatch[1]);
+      function extractValue(patterns, min, max) {
+        for (const pat of patterns) {
+          const m = clean.match(pat);
+          if (m && m[1]) {
+            const val = parseFloat(m[1]);
+            if (!isNaN(val) && (min === undefined || val >= min) && (max === undefined || val <= max)) {
+              return val;
+            }
+          }
+        }
+        return undefined;
+      }
 
-      const pco2Match = clean.match(/\b(?:pCO2|PCO2|pco2)\s*[:=]?\s*(\d{1,3}(?:\.\d)?)\b/i);
-      if (pco2Match) results.pco2 = parseFloat(pco2Match[1]);
+      // 1. pH (Range: 6.5 - 7.9)
+      const phVal = extractValue([
+        /\b(?:p[Hh]|PH)\s*[:=]?\s*([67]\.\d{1,3})\b/i,
+        /\b(?:p[Hh]|PH)[^\d\n\r]{0,12}([67]\.\d{1,3})\b/i,
+        /\b([67]\.\d{2,3})\b/
+      ], 6.5, 7.9);
+      if (phVal !== undefined) results.ph = phVal;
 
-      const po2Match = clean.match(/\b(?:pO2|PO2|po2)\s*[:=]?\s*(\d{1,3}(?:\.\d)?)\b/i);
-      if (po2Match) results.po2 = parseFloat(po2Match[1]);
+      // 2. pCO2 (Range: 10 - 150) - handles pCO2, pC02, pcO2, pCOz, PCO2
+      const pco2Val = extractValue([
+        /\b(?:p[Cck][O0o][2zZ]|pco2)[^\d\n\r]{0,15}?(\d{1,3}(?:\.\d)?)\b/i,
+        /(?:pCO2|pC02|pco2)\s*[:=]?\s*(\d{1,3}(?:\.\d)?)/i,
+        /\b(?:pCO2|PCO2)\b[^\d]{0,20}(\d{1,3}(?:\.\d)?)/i
+      ], 10, 150);
+      if (pco2Val !== undefined) results.pco2 = pco2Val;
 
-      const hco3stdMatch = clean.match(/\b(?:c?HCO3[\-_]?(?:\([^)]*st[^)]*\)|std|st)|SBC)\s*[:=]?\s*(\d{1,2}(?:\.\d)?)\b/i);
-      if (hco3stdMatch) results.hco3std = parseFloat(hco3stdMatch[1]);
+      // 3. pO2 (Range: 15 - 500) - handles pO2, p02, pOz, PO2
+      const po2Val = extractValue([
+        /\b(?:p[O0o][2zZ]|po2)[^\d\n\r]{0,15}?(\d{1,3}(?:\.\d)?)\b/i,
+        /(?:pO2|p02|po2)\s*[:=]?\s*(\d{1,3}(?:\.\d)?)/i,
+        /\b(?:pO2|PO2)\b[^\d]{0,20}(\d{1,3}(?:\.\d)?)/i
+      ], 15, 500);
+      if (po2Val !== undefined) results.po2 = po2Val;
 
-      const hco3Match = clean.match(/\b(?:c?HCO3[\-_]?(?:\(P\))?|Act\s*HCO3|Bicarb)\s*[:=]?\s*(\d{1,2}(?:\.\d)?)\b/i);
-      if (hco3Match) results.hco3 = parseFloat(hco3Match[1]);
+      // 4. Standard Bicarb SBC / HCO3(st) (Range: 5 - 50)
+      const hco3stdVal = extractValue([
+        /\b(?:c?H[C\(][O0o]3?[\-_]?(?:\([^)]*st[^)]*\)|std|st)|SBC)[^\d\n\r]{0,15}?(\d{1,2}(?:\.\d)?)\b/i,
+        /\b(?:HCO3std|HCO3\(st\)|SBC)[^\d]{0,15}?(\d{1,2}(?:\.\d)?)/i
+      ], 5, 50);
+      if (hco3stdVal !== undefined) results.hco3std = hco3stdVal;
 
-      const naMatch = clean.match(/\b(?:c?Na\+?|Sodium)\s*[:=]?\s*(\d{2,3}(?:\.\d)?)\b/i);
-      if (naMatch) results.na = parseFloat(naMatch[1]);
+      // 5. Actual Bicarbonate HCO3 / cHCO3-(P) (Range: 2 - 55)
+      const hco3Val = extractValue([
+        /\b(?:c?H[C\(][O0o]3?[\-_]?(?:\(P\)|act)?|Bicarb(?:onate)?)[^\d\n\r]{0,15}?(\d{1,2}(?:\.\d)?)\b/i,
+        /\b(?:c?HCO3|HC03|HCO3-)[^\d]{0,15}?(\d{1,2}(?:\.\d)?)/i,
+        /(?:HCO3|HC03)\s*[:=]?\s*(\d{1,2}(?:\.\d)?)/i
+      ], 2, 55);
+      if (hco3Val !== undefined) results.hco3 = hco3Val;
 
-      const kMatch = clean.match(/\b(?:c?K\+?|Potassium)\s*[:=]?\s*([1-9](?:\.\d{1,2})?)\b/i);
-      if (kMatch) results.k = parseFloat(kMatch[1]);
+      // 6. Sodium Na / cNa+ (Range: 100 - 190)
+      const naVal = extractValue([
+        /\b(?:c?Na[\+\*t]?|Sodium)[^\d\n\r]{0,15}?(\d{2,3}(?:\.\d)?)\b/i,
+        /\b(?:c?Na\+?|Sodium)\s*[:=]?\s*(\d{2,3}(?:\.\d)?)/i
+      ], 100, 190);
+      if (naVal !== undefined) results.na = naVal;
 
-      const clMatch = clean.match(/\b(?:c?Cl[\-_]?|Chloride)\s*[:=]?\s*(\d{2,3}(?:\.\d)?)\b/i);
-      if (clMatch) results.cl = parseFloat(clMatch[1]);
+      // 7. Potassium K / cK+ (Range: 1.0 - 10.0)
+      const kVal = extractValue([
+        /\b(?:c?K[\+\*t]?|Potassium)[^\d\n\r]{0,15}?([1-9](?:\.\d{1,2})?)\b/i,
+        /\b(?:c?K\+?|Potassium)\s*[:=]?\s*([1-9](?:\.\d{1,2})?)/i
+      ], 1.0, 10.0);
+      if (kVal !== undefined) results.k = kVal;
 
-      const caMatch = clean.match(/\b(?:c?Ca(?:\+{1,2}|2\+)?|iCa|Calcium)\s*[:=]?\s*([0-2]\.\d{1,2})\b/i);
-      if (caMatch) results.ca = parseFloat(caMatch[1]);
+      // 8. Chloride Cl / cCl- (Range: 60 - 150)
+      const clVal = extractValue([
+        /\b(?:c?C[lI1][\-_]?|Chloride)[^\d\n\r]{0,15}?(\d{2,3}(?:\.\d)?)\b/i,
+        /\b(?:c?Cl[\-_]?|Chloride)\s*[:=]?\s*(\d{2,3}(?:\.\d)?)/i
+      ], 60, 150);
+      if (clVal !== undefined) results.cl = clVal;
 
-      const rbgMatch = clean.match(/\b(?:c?Glu(?:cose)?|RBG|BG)\s*[:=]?\s*(\d{2,4})\b/i);
-      if (rbgMatch) results.rbg = parseFloat(rbgMatch[1]);
+      // 9. Calcium Ca / cCa2+ / iCa (Range: 0.3 - 3.5)
+      const caVal = extractValue([
+        /\b(?:c?Ca(?:2\+|\+{1,2}|t)?|iCa|Calcium)[^\d\n\r]{0,15}?([0-3]\.\d{1,2})\b/i,
+        /\b(?:c?Ca|iCa)\s*[:=]?\s*([0-3]\.\d{1,2})/i
+      ], 0.3, 3.5);
+      if (caVal !== undefined) results.ca = caVal;
 
-      const hbMatch = clean.match(/\b(?:c?t?Hb|Hgb|Hemoglobin)\s*[:=]?\s*(\d{1,2}(?:\.\d)?)\b/i);
-      if (hbMatch) results.hb = parseFloat(hbMatch[1]);
+      // 10. Glucose / RBG (Range: 20 - 1200)
+      const rbgVal = extractValue([
+        /\b(?:c?Glu(?:cose)?|RBG|BG)[^\d\n\r]{0,15}?(\d{2,4}(?:\.\d)?)\b/i,
+        /\b(?:cGlu|Glu|Glucose|RBG)\s*[:=]?\s*(\d{2,4})/i
+      ], 20, 1200);
+      if (rbgVal !== undefined) results.rbg = rbgVal;
+
+      // 11. Hemoglobin Hb / ctHb (Range: 3.0 - 25.0)
+      const hbVal = extractValue([
+        /\b(?:c?t?H[bg]|Hgb|Hemoglobin)[^\d\n\r]{0,15}?(\d{1,2}(?:\.\d)?)\b/i,
+        /\b(?:ctHb|tHb|Hb|Hgb)\s*[:=]?\s*(\d{1,2}(?:\.\d)?)/i
+      ], 3.0, 25.0);
+      if (hbVal !== undefined) results.hb = hbVal;
 
       return results;
     }
@@ -3949,10 +4002,27 @@ Hb 13.2 g/dL`;
 
           const imgData = ctx.getImageData(0, 0, w, h);
           const d = imgData.data;
+          const hist = new Uint32Array(256);
           for (let i = 0; i < d.length; i += 4) {
-            const v = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-            const cv = v < 135 ? Math.max(0, v * 0.6) : Math.min(255, v * 1.3);
-            d[i] = cv; d[i+1] = cv; d[i+2] = cv;
+            const v = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
+            d[i] = v;
+            hist[v]++;
+          }
+          const total = w * h;
+          let lo = 0, hi = 255;
+          for (let acc = 0; lo < 255; lo++) {
+            acc += hist[lo];
+            if (acc >= total * 0.02) break;
+          }
+          for (let acc = 0; hi > 0; hi--) {
+            acc += hist[hi];
+            if (acc >= total * 0.02) break;
+          }
+          const range = Math.max(1, hi - lo);
+          for (let i = 0; i < d.length; i += 4) {
+            const v = Math.max(0, Math.min(255, Math.round(((d[i] - lo) * 255) / range)));
+            d[i] = v; d[i+1] = v; d[i+2] = v;
+            d[i+3] = 255;
           }
           ctx.putImageData(imgData, 0, 0);
 
@@ -4005,24 +4075,25 @@ Hb 13.2 g/dL`;
       const ca = valOrNull('scan-val-ca');
       const hb = valOrNull('scan-val-hb');
 
-      if (ph) document.getElementById('abg-ph').value = ph;
-      if (pco2) document.getElementById('abg-pco2').value = pco2;
-      if (po2) document.getElementById('abg-po2').value = po2;
-      if (hco3) document.getElementById('abg-hco3').value = hco3;
-      if (hco3std) document.getElementById('abg-hco3std').value = hco3std;
-      if (na) document.getElementById('abg-na').value = na;
-      if (k) document.getElementById('abg-k').value = k;
-      if (cl) document.getElementById('abg-cl').value = cl;
+      if (ph) { document.getElementById('abg-ph').value = ph; document.getElementById('abg-ph').dispatchEvent(new Event('input')); }
+      if (pco2) { document.getElementById('abg-pco2').value = pco2; document.getElementById('abg-pco2').dispatchEvent(new Event('input')); }
+      if (po2) { document.getElementById('abg-po2').value = po2; document.getElementById('abg-po2').dispatchEvent(new Event('input')); }
+      if (hco3) { document.getElementById('abg-hco3').value = hco3; document.getElementById('abg-hco3').dispatchEvent(new Event('input')); }
+      if (hco3std) { document.getElementById('abg-hco3std').value = hco3std; document.getElementById('abg-hco3std').dispatchEvent(new Event('input')); }
+      if (na) { document.getElementById('abg-na').value = na; document.getElementById('abg-na').dispatchEvent(new Event('input')); }
+      if (k) { document.getElementById('abg-k').value = k; document.getElementById('abg-k').dispatchEvent(new Event('input')); }
+      if (cl) { document.getElementById('abg-cl').value = cl; document.getElementById('abg-cl').dispatchEvent(new Event('input')); }
       if (rbg) {
         document.getElementById('abg-rbg').value = rbg;
+        document.getElementById('abg-rbg').dispatchEvent(new Event('input'));
         const curRbgEl = document.getElementById('patient-current-rbg');
         if (curRbgEl && !curRbgEl.value) curRbgEl.value = rbg;
       }
-      if (ca) document.getElementById('abg-ca').value = ca;
-      if (hb) document.getElementById('abg-hb').value = hb;
+      if (ca) { document.getElementById('abg-ca').value = ca; document.getElementById('abg-ca').dispatchEvent(new Event('input')); }
+      if (hb) { document.getElementById('abg-hb').value = hb; document.getElementById('abg-hb').dispatchEvent(new Event('input')); }
 
       document.getElementById('abg-scanner-modal').classList.add('hidden');
-      showToast("Autofilled ABG slots! Click '+ Log Serial Reading' to record.");
+      showToast("Autofilled ABG slots! Click '+ Log Reading' to record.");
     });
 
 

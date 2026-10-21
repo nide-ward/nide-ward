@@ -16,7 +16,7 @@ import { regimenSummary } from "@/lib/insulin";
 import { useAction } from "./use-action";
 import { InlineError, Panel } from "./ui";
 
-const TAGS = ["Missed Doses", "Common Cold", "Recent T1DM", "Dysuria", "SGLT2i", "Type 1 DM", "Type 2 DM", "Hypertension", "CKD Stage 3", "CAD / IHD", "History of recurrent DKA", "Heavy Smoker"];
+const TAGS = ["Missed Doses", "Common Cold", "Recent T1DM", "Dysuria", "SGLT2i"];
 
 /** The prototype's admit window had these four tabs; here they are steps, saved together at the end. */
 const STEPS = ["Admission and info", "First blood gas", "Insulin and drugs", "Workup and plan"];

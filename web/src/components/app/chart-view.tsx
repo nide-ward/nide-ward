@@ -18,6 +18,7 @@ import { DrugsSection, type MedRow } from "./drugs-section";
 import { InsulinSection, type InsulinData } from "./insulin-section";
 import { MediaSection, type MediaRow } from "./media-section";
 import { OverviewSection, type OverviewData } from "./overview-section";
+import { PlanSection } from "./plan-section";
 import { ProtocolPills } from "./protocol-pills";
 import { useAction } from "./use-action";
 import { InlineError, Pill } from "./ui";
@@ -145,15 +146,13 @@ function Inner(p: ChartViewProps & { epoch: number }) {
         </div>
       )}
 
-      {!p.discharged && <ProtocolPills latestAbg={latest} urineAcetone={p.overview.urineAcetone} />}
-
       <Tabs defaultValue="overview">
-        <TabsList aria-label="Chart sections">
+        <TabsList aria-label="Chart sections" className="overflow-x-auto whitespace-nowrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="abg">Blood gases</TabsTrigger>
           <TabsTrigger value="insulin">Insulin</TabsTrigger>
           <TabsTrigger value="drugs">Drugs</TabsTrigger>
-          <TabsTrigger value="photos">Lab photos</TabsTrigger>
+          <TabsTrigger value="plan">Plan</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <OverviewSection key={`o${p.epoch}`} data={p.overview} hue={wardHue(p.wardId)} />
@@ -167,8 +166,8 @@ function Inner(p: ChartViewProps & { epoch: number }) {
         <TabsContent value="drugs">
           <DrugsSection meds={p.meds} />
         </TabsContent>
-        <TabsContent value="photos">
-          <MediaSection media={p.media} />
+        <TabsContent value="plan">
+          <PlanSection key={`pl${p.epoch}`} data={p.overview} media={p.media} hue={wardHue(p.wardId)} />
         </TabsContent>
       </Tabs>
     </div>
