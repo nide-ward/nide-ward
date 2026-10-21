@@ -10,7 +10,7 @@ import { InlineError } from "./ui";
 
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -23,11 +23,12 @@ export function LoginForm() {
         setPending(true);
         setError(null);
         try {
-          const { error } = await authClient.signIn.email({ email, password });
+          const { error } = await authClient.signIn.username({ username: username.trim(), password });
           if (error) {
-            setError(error.status === 429 ? "Too many attempts. Wait a minute and try again." : "That email and password do not match an active account.");
+            setError(error.status === 429 ? "Too many attempts. Wait a minute and try again." : "That username and password do not match an active account.");
             return;
           }
+          // The app sends a temporary password on to the "set your password" screen.
           router.push("/");
           router.refresh();
         } catch {
@@ -37,7 +38,16 @@ export function LoginForm() {
         }
       }}
     >
-      <Input label="Email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <Input
+        label="Username"
+        autoComplete="username"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        required
+      />
       <PasswordField label="Password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       <InlineError>{error}</InlineError>
       <Button type="submit" size="lg" loading={pending}>

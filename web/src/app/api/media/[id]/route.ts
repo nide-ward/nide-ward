@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const staff = await getStaff();
   if (!staff) return new NextResponse("Unauthorized", { status: 401 });
+  if (staff.mustChangePassword) return new NextResponse("Set your own password first.", { status: 403 });
   const { id } = await ctx.params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new NextResponse("Not found", { status: 404 });
   const [row] = await getReadDb().select().from(schema.labMedia).where(eq(schema.labMedia.id, id));

@@ -32,6 +32,8 @@ export const staffProfile = pgTable("staff_profile", {
   active: boolean("active").notNull().default(true),
   /** Display preference: light (default), dark, or system. Follows the user across devices. */
   theme: text("theme").notNull().default("light"),
+  /** Set when an attending creates the account or resets the password; cleared once the user picks their own. */
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

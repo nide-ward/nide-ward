@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { usernameSchema } from "./validation";
 
 /**
  * Environment access is lazy on purpose: nothing here runs at import time, so
@@ -42,7 +43,7 @@ const storageSchema = z.object({
 });
 
 const seedAdminSchema = z.object({
-  SEED_ADMIN_EMAIL: z.email(),
+  SEED_ADMIN_USERNAME: usernameSchema,
   SEED_ADMIN_PASSWORD: z.string().min(10),
   SEED_ADMIN_NAME: z.string().min(1),
   SEED_ADMIN_BADGE: z.string().optional(),

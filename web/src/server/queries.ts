@@ -187,10 +187,10 @@ export async function listStaff() {
   const db = getReadDb();
   const [profiles, users] = await Promise.all([
     db.select().from(staffProfile).orderBy(asc(staffProfile.displayName)),
-    db.select({ id: schema.user.id, email: schema.user.email }).from(schema.user),
+    db.select({ id: schema.user.id, username: schema.user.username }).from(schema.user),
   ]);
-  const emailBy = new Map(users.map((u) => [u.id, u.email]));
-  return profiles.map((p) => ({ ...p, email: emailBy.get(p.userId) ?? "" }));
+  const usernameBy = new Map(users.map((u) => [u.id, u.username ?? ""]));
+  return profiles.map((p) => ({ ...p, username: usernameBy.get(p.userId) ?? "" }));
 }
 
 /** Census for the print view: every bed in every ward with its active patient detail. */

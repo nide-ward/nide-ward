@@ -43,6 +43,10 @@ export async function runAction<S extends z.ZodType, T>(
 ): Promise<ActionResult<T>> {
   const staff = await getStaff();
   if (!staff) return { ok: false, code: "unauthenticated", error: "Your session has ended. Sign in again." };
+  // A temporary password allows nothing except replacing it.
+  if (staff.mustChangePassword && permission !== "profile.password") {
+    return { ok: false, code: "forbidden", error: "Set your own password first." };
+  }
   if (!can(staff.role, permission)) {
     return { ok: false, code: "forbidden", error: "Your role is not allowed to do this." };
   }

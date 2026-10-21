@@ -9,6 +9,7 @@ import { PasswordField } from "@/components/arc/password-field/password-field";
 import { Select } from "@/components/arc/select/select";
 import { createStaff, deleteStaff, resetStaffPassword, updateStaff } from "@/server/actions/staff";
 import { CLINICAL_ROLES, ROLE_INFO, type ClinicalRole } from "@/lib/permissions";
+import { USERNAME_HINT, USERNAME_MAX, USERNAME_MIN } from "@/lib/username";
 import { useAction } from "./use-action";
 import { HUE, ROLE_HUE } from "@/lib/hues";
 import { InlineError, Panel, Pill } from "./ui";
@@ -16,8 +17,10 @@ import { useToast } from "./toast-provider";
 
 export interface StaffRow {
   userId: string;
-  email: string;
+  username: string;
   displayName: string;
+  /** Still on the temporary password an attending set. */
+  mustChangePassword: boolean;
   badgeNo: string | null;
   clinicalRole: ClinicalRole;
   active: boolean;
@@ -29,29 +32,46 @@ function CreateDialog() {
   const { run, pending, error } = useAction();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ email: "", displayName: "", badgeNo: "", role: "resident", password: "" });
+  const [f, setF] = useState({ username: "", displayName: "", badgeNo: "", role: "resident", password: "" });
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>Add staff member</Button>
       </DialogTrigger>
-      <DialogContent title="Add staff member" description="They sign in with this email and the temporary password you set. Share it in person.">
+      <DialogContent
+        title="Add staff member"
+        description="They sign in with this username and the temporary password you set, then must choose their own password. Share it in person."
+      >
         <form
           className="grid gap-4"
           onSubmit={(e) => {
             e.preventDefault();
             void run(() => createStaff(f), () => {
-              toast("Staff member added", f.displayName);
-              setF({ email: "", displayName: "", badgeNo: "", role: "resident", password: "" });
+              toast("Staff member added", `${f.displayName} signs in as ${f.username.trim().toLowerCase()}`);
+              setF({ username: "", displayName: "", badgeNo: "", role: "resident", password: "" });
               setOpen(false);
             });
           }}
         >
           <Input label="Full name" value={f.displayName} onChange={(e) => setF({ ...f, displayName: e.target.value })} required />
-          <Input label="Email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} required />
+          <Input
+            label="Username"
+            value={f.username}
+            onChange={(e) => setF({ ...f, username: e.target.value })}
+            required
+            minLength={USERNAME_MIN}
+            maxLength={USERNAME_MAX}
+            pattern="[A-Za-z0-9_.]+"
+            title={USERNAME_HINT}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            autoComplete="off"
+            description={`${USERNAME_HINT} Cannot be changed later.`}
+          />
           <Input label="Badge number (optional)" value={f.badgeNo} onChange={(e) => setF({ ...f, badgeNo: e.target.value })} />
           <Select label="Role" options={ROLE_OPTIONS} value={f.role} onValueChange={(v) => setF({ ...f, role: v })} description={ROLE_INFO[f.role as ClinicalRole]?.desc} />
-          <PasswordField label="Temporary password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} required minLength={10} autoComplete="new-password" description="At least 10 characters." />
+          <PasswordField label="Temporary password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} required minLength={10} autoComplete="new-password" description="At least 10 characters. They replace it the first time they sign in." />
           <InlineError>{error}</InlineError>
           <div className="flex gap-3">
             <Button type="submit" loading={pending}>
@@ -82,7 +102,7 @@ function EditDialog({ row, isSelf }: { row: StaffRow; isSelf: boolean }) {
           Edit
         </Button>
       </DialogTrigger>
-      <DialogContent title={`Edit ${row.displayName}`} description={row.email}>
+      <DialogContent title={`Edit ${row.displayName}`} description={`Signs in as ${row.username}`}>
         <form
           className="grid gap-4"
           onSubmit={(e) => {
@@ -116,7 +136,7 @@ function EditDialog({ row, isSelf }: { row: StaffRow; isSelf: boolean }) {
           onSubmit={(e) => {
             e.preventDefault();
             void reset.run(() => resetStaffPassword({ userId: row.userId, password: pw }), () => {
-              toast("Password reset", "All sessions for this user were ended.");
+              toast("Password reset", "They were signed out and must choose a new password at next sign-in.");
               setPw("");
             });
           }}
@@ -163,10 +183,11 @@ export function StaffManager({ rows, selfId }: { rows: StaffRow[]; selfId: strin
           <li key={r.userId} className={`flex items-center justify-between gap-3 px-3 py-2.5 ${HUE[ROLE_HUE[r.clinicalRole]].edge}`}>
             <div className="min-w-0">
               <p className="truncate font-medium">{r.displayName}</p>
-              <p className="truncate text-sm text-text-secondary">{r.email}</p>
+              <p className="truncate text-sm text-text-secondary">{r.username}</p>
               <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                 <Pill hue={ROLE_HUE[r.clinicalRole]}>{ROLE_INFO[r.clinicalRole].title}</Pill>
                 <Pill hue={r.active ? "emerald" : undefined}>{r.active ? "Active" : "Deactivated"}</Pill>
+                {r.mustChangePassword && <Pill hue="amber">Temporary password</Pill>}
               </p>
             </div>
             <EditDialog row={r} isSelf={r.userId === selfId} />
@@ -179,7 +200,7 @@ export function StaffManager({ rows, selfId }: { rows: StaffRow[]; selfId: strin
           <thead className="bg-surface-muted text-text-secondary">
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">Name</th>
-              <th scope="col" className="px-3 py-2 font-medium">Email</th>
+              <th scope="col" className="px-3 py-2 font-medium">Username</th>
               <th scope="col" className="px-3 py-2 font-medium">Badge</th>
               <th scope="col" className="px-3 py-2 font-medium">Role</th>
               <th scope="col" className="px-3 py-2 font-medium">Status</th>
@@ -190,11 +211,14 @@ export function StaffManager({ rows, selfId }: { rows: StaffRow[]; selfId: strin
             {rows.map((r) => (
               <tr key={r.userId} className={`border-t border-border ${HUE[ROLE_HUE[r.clinicalRole]].edge}`}>
                 <td className="px-3 py-2 font-medium">{r.displayName}</td>
-                <td className="px-3 py-2">{r.email}</td>
+                <td className="px-3 py-2">{r.username}</td>
                 <td className="px-3 py-2">{r.badgeNo ?? "--"}</td>
                 <td className="px-3 py-2"><Pill hue={ROLE_HUE[r.clinicalRole]}>{ROLE_INFO[r.clinicalRole].title}</Pill></td>
                 <td className="px-3 py-2">
-                  <Pill hue={r.active ? "emerald" : undefined}>{r.active ? "Active" : "Deactivated"}</Pill>
+                  <span className="flex flex-wrap gap-1.5">
+                    <Pill hue={r.active ? "emerald" : undefined}>{r.active ? "Active" : "Deactivated"}</Pill>
+                    {r.mustChangePassword && <Pill hue="amber">Temporary password</Pill>}
+                  </span>
                 </td>
                 <td className="px-3 py-2 text-right">
                   <EditDialog row={r} isSelf={r.userId === selfId} />
