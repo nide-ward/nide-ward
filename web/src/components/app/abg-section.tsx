@@ -2,8 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Button from "@/components/arc/button/button";
-import LineChart from "@/components/arc/line-chart/line-chart";
-import SegmentedControl from "@/components/arc/segmented-control/segmented-control";
 import { Input } from "@/components/arc/input/input";
 import { Textarea } from "@/components/arc/textarea/textarea";
 import { addAbgReading, deleteAbgReading } from "@/server/actions/abg";
@@ -112,50 +110,6 @@ function Interpretation({ latest }: { latest: AbgRowData | null }) {
         )}
         <p className={`pt-1 font-medium ${summary.ready ? "text-success" : "text-hue-rose-ink"}`}>{summary.text}</p>
       </div>
-    </div>
-  );
-}
-
-const METRICS = [
-  { value: "ph", label: "pH", digits: 2 },
-  { value: "hco3", label: "HCO3", digits: 1 },
-  { value: "ag", label: "Anion gap", digits: 1 },
-  { value: "pco2", label: "pCO2", digits: 1 },
-  { value: "k", label: "K", digits: 1 },
-  { value: "rbg", label: "RBG", digits: 0 },
-];
-
-function TrendChart({ rows }: { rows: AbgRowData[] }) {
-  const [metric, setMetric] = useState("ph");
-  const info = METRICS.find((m) => m.value === metric) ?? METRICS[0];
-  const data = useMemo(() => {
-    return rows
-      .map((r) => {
-        const v = metric === "ag" ? analyzeABG(r)?.ag ?? null : (r[metric as keyof AbgEntry] as number | null | undefined) ?? null;
-        const label = toCairoInputValue(r.takenAt).replace("T", " ");
-        return { key: r.id, label, axisLabel: label.slice(5, 16), v };
-      })
-      .filter((d): d is typeof d & { v: number } => d.v !== null)
-      .map((d) => ({ key: d.key, label: d.label, axisLabel: d.axisLabel, values: { [metric]: d.v } }));
-  }, [rows, metric]);
-
-  return (
-    <div className="grid gap-3">
-      <SegmentedControl label="Trend metric" options={METRICS.map((m) => ({ value: m.value, label: m.label }))} value={metric} onValueChange={setMetric} />
-      {data.length < 2 ? (
-        <p className="text-sm text-text-secondary">Log at least two readings with {info.label} to see a trend.</p>
-      ) : (
-        <LineChart
-          label={`${info.label} over time`}
-          categoryLabel="Time (Cairo)"
-          data={data}
-          series={[{ key: metric, label: info.label }]}
-          height={200}
-          legend={false}
-          formatValue={(v) => v.toFixed(info.digits)}
-          formatTick={(v) => v.toFixed(info.digits)}
-        />
-      )}
     </div>
   );
 }
@@ -433,9 +387,6 @@ export function AbgSection({ rows, nowIso }: { rows: AbgRowData[]; nowIso: strin
         }
       >
         <Interpretation latest={latest} />
-      </Panel>
-      <Panel hue="sky" title="Trend">
-        <TrendChart rows={rows} />
       </Panel>
       {chart.allowed("abg.record") && (
         <Panel hue="sky" title="Log a reading" description="Scheduled draws are 03:00, 07:00, 11:00, 15:00, 19:00 and 23:00.">

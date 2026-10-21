@@ -392,7 +392,7 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
       <InlineError>{localError ?? error}</InlineError>
       <div
         className={`flex flex-wrap gap-3 ${
-          inDialog ? "sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-border bg-surface-raised px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]" : ""
+          inDialog ? "sticky bottom-0 z-10 -mx-6 mt-1 border-t border-border bg-surface-raised px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]" : ""
         }`}
       >
         {step > 0 ? (

@@ -198,6 +198,8 @@ body {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* The sticky action bar supplies its own bottom padding, so it sits flush with the dialog edge. */
+  padding-bottom: 0 !important;
 }
 @media (max-width: 639px) {
   .admit-dialog {
