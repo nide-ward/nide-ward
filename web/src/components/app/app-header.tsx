@@ -37,9 +37,16 @@ export function AppHeader({ name, role, roster, theme }: Props) {
     : "No shift roster set yet";
 
   async function signOut() {
-    await authClient.signOut();
-    router.push("/login");
-    router.refresh();
+    // Do not pass the click event into authClient.signOut — Better Auth treats the
+    // first argument as the request body and JSON-serializing a SyntheticEvent throws.
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+          router.refresh();
+        },
+      },
+    });
   }
 
   return (
@@ -61,14 +68,14 @@ export function AppHeader({ name, role, roster, theme }: Props) {
               <ThemePicker initial={theme} />
               <button
                 type="button"
-                onClick={signOut}
+                onClick={() => void signOut()}
                 className="hidden min-h-8 items-center rounded-lg border border-topbar-border bg-topbar-control px-3 text-sm text-topbar-strong hover:bg-topbar-border sm:inline-flex"
               >
                 Sign out
               </button>
               <button
                 type="button"
-                onClick={signOut}
+                onClick={() => void signOut()}
                 className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-topbar-border bg-topbar-control text-topbar-ink sm:hidden"
                 aria-label="Sign out"
               >
