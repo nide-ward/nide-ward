@@ -1,0 +1,284 @@
+@import "tailwindcss";
+
+/*
+ * Colors, radii and type come from Arc's foundation.css (semantic tokens, light and dark via
+ * data-theme). Tailwind is used for layout only; these mappings let utilities such as
+ * bg-surface or text-text-secondary resolve to the Arc tokens instead of raw colors.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  /* Dialog background (Arc's .content uses it); the admit dialog's sticky action bar needs it opaque. */
+  --color-surface-raised: var(--surface-raised);
+  --color-foreground: var(--foreground);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-hue-rose: var(--hue-rose);
+  --color-hue-rose-soft: var(--hue-rose-soft);
+  --color-hue-rose-line: var(--hue-rose-line);
+  --color-hue-rose-ink: var(--hue-rose-ink);
+  --color-hue-blue: var(--hue-blue);
+  --color-hue-blue-soft: var(--hue-blue-soft);
+  --color-hue-blue-line: var(--hue-blue-line);
+  --color-hue-blue-ink: var(--hue-blue-ink);
+  --color-hue-indigo: var(--hue-indigo);
+  --color-hue-indigo-soft: var(--hue-indigo-soft);
+  --color-hue-indigo-line: var(--hue-indigo-line);
+  --color-hue-indigo-ink: var(--hue-indigo-ink);
+  --color-hue-amber: var(--hue-amber);
+  --color-hue-amber-soft: var(--hue-amber-soft);
+  --color-hue-amber-line: var(--hue-amber-line);
+  --color-hue-amber-ink: var(--hue-amber-ink);
+  --color-hue-sky: var(--hue-sky);
+  --color-hue-sky-soft: var(--hue-sky-soft);
+  --color-hue-sky-line: var(--hue-sky-line);
+  --color-hue-sky-ink: var(--hue-sky-ink);
+  --color-hue-purple: var(--hue-purple);
+  --color-hue-purple-soft: var(--hue-purple-soft);
+  --color-hue-purple-line: var(--hue-purple-line);
+  --color-hue-purple-ink: var(--hue-purple-ink);
+  --color-hue-cyan: var(--hue-cyan);
+  --color-hue-cyan-soft: var(--hue-cyan-soft);
+  --color-hue-cyan-line: var(--hue-cyan-line);
+  --color-hue-cyan-ink: var(--hue-cyan-ink);
+  --color-hue-teal: var(--hue-teal);
+  --color-hue-teal-soft: var(--hue-teal-soft);
+  --color-hue-teal-line: var(--hue-teal-line);
+  --color-hue-teal-ink: var(--hue-teal-ink);
+  --color-hue-emerald: var(--hue-emerald);
+  --color-hue-emerald-soft: var(--hue-emerald-soft);
+  --color-hue-emerald-line: var(--hue-emerald-line);
+  --color-hue-emerald-ink: var(--hue-emerald-ink);
+  --color-hue-on: var(--hue-on);
+  --color-topbar: var(--topbar);
+  --color-topbar-border: var(--topbar-border);
+  --color-topbar-ink: var(--topbar-ink);
+  --color-topbar-strong: var(--topbar-strong);
+  --color-topbar-accent: var(--topbar-accent);
+  --color-topbar-control: var(--topbar-control);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/*
+ * Prototype palette (Tailwind rose, blue, indigo, amber, sky, purple, cyan, teal, emerald), as tokens.
+ * Per hue: solid (fills, white or dark text via hue-on), soft (tinted panel), line (panel border), ink (text on soft or surface).
+ * Solids are the 700 shades in light and the 400 shades in dark, so text keeps WCAG AA (4.5:1 or better) on every combination;
+ * soft/line/ink are mixed from the solid and the surface, so they follow the theme automatically.
+ *   wards:    female rose, male blue, paid indigo, overflow amber
+ *   sections: blood gas sky, basal insulin purple, bolus insulin amber, drugs teal, workup and lab media cyan
+ *   status:   fine emerald, shift-ready teal, overdue rose, untrusted amber
+ */
+:root {
+  --hue-rose: #be123c;
+  --hue-blue: #1d4ed8;
+  --hue-indigo: #4338ca;
+  --hue-amber: #b45309;
+  --hue-sky: #0369a1;
+  --hue-purple: #7e22ce;
+  --hue-cyan: #0e7490;
+  --hue-teal: #0f766e;
+  --hue-emerald: #047857;
+  --hue-on: #ffffff;
+  /* The dark slate bar at the top of every page, as in the prototype. */
+  --topbar: #0f172a;
+  --topbar-border: #1e293b;
+  --topbar-ink: #cbd5e1;
+  --topbar-strong: #ffffff;
+  --topbar-accent: #2dd4bf;
+  --topbar-control: #1e293b;
+  --hue-rose-soft: color-mix(in oklab, var(--hue-rose) 12%, var(--surface));
+  --hue-rose-line: color-mix(in oklab, var(--hue-rose) 38%, var(--surface));
+  --hue-rose-ink: color-mix(in oklab, var(--hue-rose) 65%, var(--foreground));
+  --hue-blue-soft: color-mix(in oklab, var(--hue-blue) 12%, var(--surface));
+  --hue-blue-line: color-mix(in oklab, var(--hue-blue) 38%, var(--surface));
+  --hue-blue-ink: color-mix(in oklab, var(--hue-blue) 65%, var(--foreground));
+  --hue-indigo-soft: color-mix(in oklab, var(--hue-indigo) 12%, var(--surface));
+  --hue-indigo-line: color-mix(in oklab, var(--hue-indigo) 38%, var(--surface));
+  --hue-indigo-ink: color-mix(in oklab, var(--hue-indigo) 65%, var(--foreground));
+  --hue-amber-soft: color-mix(in oklab, var(--hue-amber) 12%, var(--surface));
+  --hue-amber-line: color-mix(in oklab, var(--hue-amber) 38%, var(--surface));
+  --hue-amber-ink: color-mix(in oklab, var(--hue-amber) 65%, var(--foreground));
+  --hue-sky-soft: color-mix(in oklab, var(--hue-sky) 12%, var(--surface));
+  --hue-sky-line: color-mix(in oklab, var(--hue-sky) 38%, var(--surface));
+  --hue-sky-ink: color-mix(in oklab, var(--hue-sky) 65%, var(--foreground));
+  --hue-purple-soft: color-mix(in oklab, var(--hue-purple) 12%, var(--surface));
+  --hue-purple-line: color-mix(in oklab, var(--hue-purple) 38%, var(--surface));
+  --hue-purple-ink: color-mix(in oklab, var(--hue-purple) 65%, var(--foreground));
+  --hue-cyan-soft: color-mix(in oklab, var(--hue-cyan) 12%, var(--surface));
+  --hue-cyan-line: color-mix(in oklab, var(--hue-cyan) 38%, var(--surface));
+  --hue-cyan-ink: color-mix(in oklab, var(--hue-cyan) 65%, var(--foreground));
+  --hue-teal-soft: color-mix(in oklab, var(--hue-teal) 12%, var(--surface));
+  --hue-teal-line: color-mix(in oklab, var(--hue-teal) 38%, var(--surface));
+  --hue-teal-ink: color-mix(in oklab, var(--hue-teal) 65%, var(--foreground));
+  --hue-emerald-soft: color-mix(in oklab, var(--hue-emerald) 12%, var(--surface));
+  --hue-emerald-line: color-mix(in oklab, var(--hue-emerald) 38%, var(--surface));
+  --hue-emerald-ink: color-mix(in oklab, var(--hue-emerald) 65%, var(--foreground));
+}
+:root[data-theme="dark"] {
+  --hue-rose: #fb7185;
+  --hue-blue: #60a5fa;
+  --hue-indigo: #818cf8;
+  --hue-amber: #fbbf24;
+  --hue-sky: #38bdf8;
+  --hue-purple: #c084fc;
+  --hue-cyan: #22d3ee;
+  --hue-teal: #2dd4bf;
+  --hue-emerald: #34d399;
+  --hue-on: #111111;
+  --topbar: #020617;
+  --topbar-border: #1e293b;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Numbers that change or line up in columns. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Phones: iOS Safari zooms the page into any field whose text is under 16px, which Arc's
+ * 14px inputs trigger on every tap. Touch screens get 16px field text instead.
+ */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
+/* Space for the phone tab bar and the home indicator on notched phones. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/*
+ * The admit dialog: wide on desktop, a full-height sheet on phones. !important beats Arc's
+ * dialog.module.css sizing, which sets a 440px box.
+ */
+.admit-dialog {
+  width: min(calc(100vw - 2rem), 44rem) !important;
+  max-height: calc(100dvh - 2rem) !important;
+  /* Header stays put and only the body scrolls, so the scrollbar sits inside the dialog under the
+     header instead of running along the rounded outer edge. The sticky action bar lives in the body. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+.admit-dialog > :first-child {
+  flex: none;
+}
+.admit-dialog > :last-child {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (max-width: 639px) {
+  .admit-dialog {
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border-width: 0 !important;
+  }
+  .admit-dialog > :first-child {
+    padding-top: calc(var(--space-6) + env(safe-area-inset-top));
+  }
+}
+
+/* Native fields that Arc has no component for (datetime-local) match Arc inputs. */
+.native-field {
+  min-height: var(--control-height-md);
+  width: 100%;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--foreground);
+  padding: 0 0.875rem;
+  font: inherit;
+}
+
+/* Print: only the print area is shown, on white paper. */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+.print-only {
+  display: none;
+}
+
+/* Printed sheets are always black on white, in either theme. */
+.print-sheet {
+  background: #fff;
+  color: #000;
+  font-size: 10pt;
+  line-height: 1.4;
+}
+.print-sheet table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.print-sheet th,
+.print-sheet td {
+  border-bottom: 1px solid #cbd5e1;
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+.print-sheet th {
+  background: #f1f5f9;
+  font-weight: 500;
+}
+.print-sheet h1 {
+  font-size: 14pt;
+  font-weight: 500;
+}
+.print-sheet h2 {
+  font-size: 11pt;
+  font-weight: 500;
+  margin: 10px 0 4px;
+}
+.print-sheet .muted {
+  color: #475569;
+}
+.print-sheet tr {
+  break-inside: avoid;
+}

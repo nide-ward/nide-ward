@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+.next/
+out/
+dist/
+coverage/
+
+# env files (keep the example)
+.env*
+!.env.example
+**/.env*
+!**/.env.example
+
+# misc
+.DS_Store
+*.log
+*.tsbuildinfo
+.vercel/
+next-env.d.ts

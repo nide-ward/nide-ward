@@ -1,0 +1,1 @@
+ALTER TABLE "admission" ALTER COLUMN "age" DROP NOT NULL;

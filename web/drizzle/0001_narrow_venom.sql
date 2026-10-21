@@ -1,0 +1,1 @@
+ALTER TABLE "staff_profile" ADD COLUMN "theme" text DEFAULT 'light' NOT NULL;
