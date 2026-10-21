@@ -1,6 +1,7 @@
 import { ArchiveView, type ArchiveRow } from "@/components/app/archive-view";
 import { patientLabel } from "@/lib/display";
 import { regimenSummary } from "@/lib/insulin";
+import { can } from "@/lib/permissions";
 import { requireStaff } from "@/lib/session";
 import { formatCairo } from "@/lib/time";
 import { listArchive } from "@/server/queries";
@@ -12,7 +13,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const q = (sp.q ?? "").slice(0, 100);
   const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
-  const [, { rows, total, pageSize }] = await Promise.all([requireStaff(), listArchive(q, page)]);
+  const [staff, { rows, total, pageSize }] = await Promise.all([requireStaff(), listArchive(q, page)]);
 
   const data: ArchiveRow[] = rows.map(({ admission: a, bed, ward, latestAbg, regimen }) => ({
     id: a.id,
@@ -32,9 +33,9 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
     <div className="grid gap-4">
       <div>
         <h1 className="text-2xl font-medium">Archive</h1>
-        <p className="text-text-secondary">Discharged admissions. Records are never deleted from the app.</p>
+        <p className="text-text-secondary">Discharged admissions. You can delete a record permanently when it is no longer needed.</p>
       </div>
-      <ArchiveView rows={data} total={total} page={page} pageSize={pageSize} q={q} />
+      <ArchiveView rows={data} total={total} page={page} pageSize={pageSize} q={q} canDelete={can(staff.role, "archive.delete")} />
     </div>
   );
 }

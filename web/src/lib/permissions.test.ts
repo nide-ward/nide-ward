@@ -4,7 +4,7 @@ import { CLINICAL_ROLES, PERMISSIONS, can, type Permission } from "./permissions
 const ALL = Object.keys(PERMISSIONS) as Permission[];
 const CLINICAL: Permission[] = [
   "abg.record", "bedside.record", "media.attach", "abg.delete", "media.delete", "patient.admit",
-  "chart.edit", "insulin.edit", "drugs.edit", "patient.discharge", "archive.readmit",
+  "chart.edit", "insulin.edit", "drugs.edit", "patient.discharge", "archive.readmit", "archive.delete",
 ];
 const PROFILE: Permission[] = ["profile.theme", "profile.password"];
 

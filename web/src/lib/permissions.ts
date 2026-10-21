@@ -24,6 +24,7 @@ export const PERMISSIONS = {
   "drugs.edit": ALL,
   "patient.discharge": ALL,
   "archive.readmit": ALL,
+  "archive.delete": ALL,
   "roster.edit": ALL,
   "staff.manage": ADMIN_ONLY,
   // Every signed-in role can choose its own light, dark or system theme.
@@ -46,10 +47,10 @@ export const ROLE_INFO: Record<ClinicalRole, { title: string; desc: string }> = 
   },
   attending: {
     title: "Attending",
-    desc: "All clinical actions: admissions, chart, insulin, drugs, blood gases, discharge and the archive, plus the shift roster.",
+    desc: "All clinical actions: admissions, chart, insulin, drugs, blood gases, discharge, archive re-admit and delete, plus the shift roster.",
   },
   resident: {
     title: "Resident",
-    desc: "All clinical actions: admissions, chart, insulin, drugs, blood gases, discharge and the archive, plus the shift roster.",
+    desc: "All clinical actions: admissions, chart, insulin, drugs, blood gases, discharge, archive re-admit and delete, plus the shift roster.",
   },
 };

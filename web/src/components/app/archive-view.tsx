@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Button from "@/components/arc/button/button";
 import EmptyState from "@/components/arc/empty-state/empty-state";
 import { SearchField } from "@/components/arc/search-field/search-field";
-import { HUE, outcomeHue } from "@/lib/hues";
-import { Pill } from "./ui";
-import { NO_DIAGNOSIS, ageText, isBlank } from "@/lib/display";
 import { SortableDataTable, type DataColumn } from "@/components/arc/sortable-data-table/sortable-data-table";
+import { HUE, outcomeHue } from "@/lib/hues";
+import { NO_DIAGNOSIS, ageText, isBlank } from "@/lib/display";
+import { deleteArchivedAdmission } from "@/server/actions/patients";
+import { useAction } from "./use-action";
+import { InlineError, Pill } from "./ui";
+import { useToast } from "./toast-provider";
 
 export interface ArchiveRow extends Record<string, unknown> {
   id: string;
@@ -24,47 +28,47 @@ export interface ArchiveRow extends Record<string, unknown> {
   insulin: string;
 }
 
-const columns: DataColumn<ArchiveRow>[] = [
-  {
-    key: "patient",
-    label: "Patient",
-    sortable: true,
-    render: (_v, r) => (
-      <Link href={`/patients/${r.id}`} className="font-medium underline-offset-2 hover:underline">
-        {r.patient}
-      </Link>
-    ),
-  },
-  { key: "age", label: "Age", numeric: true, width: 72, render: (_v, r) => (r.age === null ? "" : r.age) },
-  { key: "bed", label: "Bed", sortable: true, width: 100 },
-  {
-    key: "diagnosis",
-    label: "Diagnosis",
-    sortable: true,
-    render: (_v, r) => (isBlank(r.diagnosis) ? <span className="text-text-muted">{NO_DIAGNOSIS}</span> : r.diagnosis),
-  },
-  { key: "admitted", label: "Admitted", sortable: true },
-  { key: "discharged", label: "Discharged", sortable: true },
-  {
-    key: "outcome",
-    label: "Outcome",
-    sortable: true,
-    render: (_v, r) => (r.outcome ? <Pill hue={outcomeHue(r.outcome)}>{r.outcome}</Pill> : ""),
-  },
-  { key: "lastAbg", label: "Final blood gas" },
-  { key: "insulin", label: "Insulin" },
-  {
-    key: "print",
-    label: "Print",
-    render: (_v, r) => (
-      <Link href={`/print/patient/${r.id}`} target="_blank" className="underline-offset-2 hover:underline">
-        Print record
-      </Link>
-    ),
-  },
-];
+function DeleteArchiveButton({ admissionId, patient }: { admissionId: string; patient: string }) {
+  const { run, pending, error } = useAction();
+  const { toast } = useToast();
+  return (
+    <div className="grid gap-1">
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        loading={pending}
+        aria-label={`Delete archived record for ${patient}`}
+        onClick={() => {
+          if (!window.confirm(`Delete ${patient} from the archive permanently? This cannot be undone.`)) return;
+          void run(
+            () => deleteArchivedAdmission({ admissionId }),
+            () => toast("Deleted from archive", patient),
+          );
+        }}
+      >
+        Delete
+      </Button>
+      <InlineError>{error}</InlineError>
+    </div>
+  );
+}
 
-export function ArchiveView({ rows, total, page, pageSize, q }: { rows: ArchiveRow[]; total: number; page: number; pageSize: number; q: string }) {
+export function ArchiveView({
+  rows,
+  total,
+  page,
+  pageSize,
+  q,
+  canDelete,
+}: {
+  rows: ArchiveRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  q: string;
+  canDelete: boolean;
+}) {
   const router = useRouter();
   const [term, setTerm] = useState(q);
   const first = useRef(true);
@@ -77,6 +81,56 @@ export function ArchiveView({ rows, total, page, pageSize, q }: { rows: ArchiveR
     return () => window.clearTimeout(id);
   }, [term, router]);
 
+  const columns = useMemo((): DataColumn<ArchiveRow>[] => {
+    const cols: DataColumn<ArchiveRow>[] = [
+      {
+        key: "patient",
+        label: "Patient",
+        sortable: true,
+        render: (_v, r) => (
+          <Link href={`/patients/${r.id}`} className="font-medium underline-offset-2 hover:underline">
+            {r.patient}
+          </Link>
+        ),
+      },
+      { key: "age", label: "Age", numeric: true, width: 72, render: (_v, r) => (r.age === null ? "" : r.age) },
+      { key: "bed", label: "Bed", sortable: true, width: 100 },
+      {
+        key: "diagnosis",
+        label: "Diagnosis",
+        sortable: true,
+        render: (_v, r) => (isBlank(r.diagnosis) ? <span className="text-text-muted">{NO_DIAGNOSIS}</span> : r.diagnosis),
+      },
+      { key: "admitted", label: "Admitted", sortable: true },
+      { key: "discharged", label: "Discharged", sortable: true },
+      {
+        key: "outcome",
+        label: "Outcome",
+        sortable: true,
+        render: (_v, r) => (r.outcome ? <Pill hue={outcomeHue(r.outcome)}>{r.outcome}</Pill> : ""),
+      },
+      { key: "lastAbg", label: "Final blood gas" },
+      { key: "insulin", label: "Insulin" },
+      {
+        key: "print",
+        label: "Print",
+        render: (_v, r) => (
+          <Link href={`/print/patient/${r.id}`} target="_blank" className="underline-offset-2 hover:underline">
+            Print record
+          </Link>
+        ),
+      },
+    ];
+    if (canDelete) {
+      cols.push({
+        key: "delete",
+        label: "Delete",
+        render: (_v, r) => <DeleteArchiveButton admissionId={r.id} patient={r.patient} />,
+      });
+    }
+    return cols;
+  }, [canDelete]);
+
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const href = (p: number) => `/archive?${new URLSearchParams({ ...(q ? { q } : {}), page: String(p) }).toString()}`;
 
@@ -86,46 +140,47 @@ export function ArchiveView({ rows, total, page, pageSize, q }: { rows: ArchiveR
         <SearchField label="Search name, diagnosis, bed or discharge date" value={term} onValueChange={setTerm} />
       </div>
       {rows.length === 0 ? (
-<div className="rounded-2xl border border-hue-teal-line bg-hue-teal-soft">
-        <EmptyState
-          title={q ? "No archived discharges match" : "No archived discharges yet"}
-          description={q ? "Try a different name, bed or date such as 2026-10." : "Patients you discharge from the ward board are kept here."}
-        />
-</div>
-      ) : (
-        <>
-        {/* Phone: one card per discharge, newest first (the order the server returns). */}
-        <ul className="grid gap-2 sm:hidden" aria-label="Discharged patients, newest first">
-          {rows.map((r) => (
-            <li key={r.id}>
-              <Link href={`/patients/${r.id}`} className={`grid gap-1 rounded-xl border border-border bg-surface p-3 hover:border-border-strong ${outcomeHue(r.outcome) ? HUE[outcomeHue(r.outcome)!].edge : "border-l-4 border-l-border-strong"}`}>
-                <span className="flex items-baseline justify-between gap-2">
-                  <span className="min-w-0 truncate font-medium">{r.patient}</span>
-                  {r.age !== null && <span className="shrink-0 text-sm text-text-secondary">{ageText(r.age)}</span>}
-                </span>
-                <span className={`line-clamp-2 text-sm ${isBlank(r.diagnosis) ? "text-text-muted" : ""}`}>{isBlank(r.diagnosis) ? NO_DIAGNOSIS : r.diagnosis}</span>
-                <span className="text-sm text-text-secondary">
-                  {r.ward}, {r.bed}. Discharged {r.discharged}
-                </span>
-                {r.outcome && (
-                  <span className="text-sm">
-                    <Pill hue={outcomeHue(r.outcome)}>{r.outcome}</Pill>
-                  </span>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <div className="hidden overflow-x-auto sm:block">
-          <SortableDataTable<ArchiveRow>
-            rows={rows}
-            columns={columns}
-            rowKey="id"
-            caption="Discharged patients, newest first"
-            itemName={{ one: "discharge", other: "discharges" }}
-            defaultSort={{ key: "discharged", direction: "desc" }}
+        <div className="rounded-2xl border border-hue-teal-line bg-hue-teal-soft">
+          <EmptyState
+            title={q ? "No archived discharges match" : "No archived discharges yet"}
+            description={q ? "Try a different name, bed or date such as 2026-10." : "Patients you discharge from the ward board are kept here."}
           />
         </div>
+      ) : (
+        <>
+          {/* Phone: one card per discharge, newest first (the order the server returns). */}
+          <ul className="grid gap-2 sm:hidden" aria-label="Discharged patients, newest first">
+            {rows.map((r) => (
+              <li key={r.id} className={`grid gap-2 rounded-xl border border-border bg-surface p-3 ${outcomeHue(r.outcome) ? HUE[outcomeHue(r.outcome)!].edge : "border-l-4 border-l-border-strong"}`}>
+                <Link href={`/patients/${r.id}`} className="grid gap-1 hover:opacity-90">
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="min-w-0 truncate font-medium">{r.patient}</span>
+                    {r.age !== null && <span className="shrink-0 text-sm text-text-secondary">{ageText(r.age)}</span>}
+                  </span>
+                  <span className={`line-clamp-2 text-sm ${isBlank(r.diagnosis) ? "text-text-muted" : ""}`}>{isBlank(r.diagnosis) ? NO_DIAGNOSIS : r.diagnosis}</span>
+                  <span className="text-sm text-text-secondary">
+                    {r.ward}, {r.bed}. Discharged {r.discharged}
+                  </span>
+                  {r.outcome && (
+                    <span className="text-sm">
+                      <Pill hue={outcomeHue(r.outcome)}>{r.outcome}</Pill>
+                    </span>
+                  )}
+                </Link>
+                {canDelete && <DeleteArchiveButton admissionId={r.id} patient={r.patient} />}
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto sm:block">
+            <SortableDataTable<ArchiveRow>
+              rows={rows}
+              columns={columns}
+              rowKey="id"
+              caption="Discharged patients, newest first"
+              itemName={{ one: "discharge", other: "discharges" }}
+              defaultSort={{ key: "discharged", direction: "desc" }}
+            />
+          </div>
         </>
       )}
       <nav aria-label="Archive pages" className="flex flex-wrap items-center justify-between gap-3 text-sm">

@@ -146,6 +146,8 @@ export const themeSchema = z.object({ theme: z.enum(THEMES) });
 
 export const readmitSchema = z.object({ admissionId: z.uuid() });
 
+export const deleteArchivedSchema = z.object({ admissionId: z.uuid() });
+
 export const rosterSchema = z.object({
   doc1: reqText(120, "Duty doctor"),
   doc2: text(120).default(""),

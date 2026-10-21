@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Alert from "@/components/arc/alert/alert";
 import Button from "@/components/arc/button/button";
+import HoldToConfirm from "@/components/arc/hold-to-confirm/hold-to-confirm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/arc/tabs/tabs";
 import { outcomeHue, wardHue, HUE } from "@/lib/hues";
 import { NO_DIAGNOSIS, ageText, isBlank, patientLabel } from "@/lib/display";
-import { readmitPatient } from "@/server/actions/patients";
+import { deleteArchivedAdmission, readmitPatient } from "@/server/actions/patients";
 import { can, type ClinicalRole } from "@/lib/permissions";
 import { formatCairo } from "@/lib/time";
 import { AbgDueBadge, AbgSection, type AbgRowData } from "./abg-section";
@@ -51,21 +53,49 @@ function StaleBanner() {
   );
 }
 
-function ReadmitButton() {
+function ArchiveActions({ patientName }: { patientName: string }) {
   const chart = useChart();
+  const router = useRouter();
   const { toast } = useToast();
-  const { run, pending, error } = useAction();
-  if (!chart.readOnly || !can(chart.role, "archive.readmit")) return null;
+  const readmit = useAction();
+  const remove = useAction();
+  if (!chart.readOnly) return null;
+  const canReadmit = can(chart.role, "archive.readmit");
+  const canDelete = can(chart.role, "archive.delete");
+  if (!canReadmit && !canDelete) return null;
   return (
-    <div className="grid gap-2">
-      <Button
-        variant="secondary"
-        loading={pending}
-        onClick={() => void run(() => readmitPatient({ admissionId: chart.admissionId }), () => toast("Patient re-admitted to the original bed"))}
-      >
-        Re-admit to bed
-      </Button>
-      <InlineError>{error}</InlineError>
+    <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-start">
+      {canReadmit && (
+        <div className="grid gap-2">
+          <Button
+            variant="secondary"
+            loading={readmit.pending}
+            onClick={() => void readmit.run(() => readmitPatient({ admissionId: chart.admissionId }), () => toast("Patient re-admitted to the original bed"))}
+          >
+            Re-admit to bed
+          </Button>
+          <InlineError>{readmit.error}</InlineError>
+        </div>
+      )}
+      {canDelete && (
+        <div className="grid gap-2">
+          <HoldToConfirm
+            tone="danger"
+            label="Hold to delete from archive"
+            confirmedLabel="Deleted"
+            onConfirm={() =>
+              void remove.run(
+                () => deleteArchivedAdmission({ admissionId: chart.admissionId }),
+                () => {
+                  toast("Deleted from archive", patientLabel(patientName));
+                  router.push("/archive");
+                },
+              )
+            }
+          />
+          <InlineError>{remove.error}</InlineError>
+        </div>
+      )}
     </div>
   );
 }
@@ -111,7 +141,7 @@ function Inner(p: ChartViewProps & { epoch: number }) {
             <span className="font-medium">Outcome:</span> <Pill hue={outcomeHue(p.discharged.outcome)}>{p.discharged.outcome}</Pill>
           </p>
           {p.discharged.notes && <p className="whitespace-pre-wrap">{p.discharged.notes}</p>}
-          <ReadmitButton />
+          <ArchiveActions patientName={p.overview.patientName} />
         </div>
       )}
 

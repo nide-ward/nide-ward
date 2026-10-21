@@ -3,10 +3,10 @@
  * (3-30 characters: letters, numbers, underscore, dot; case-insensitive), applied here too
  * because the plugin only validates its own sign-up route, not the admin createUser call.
  */
-export const USERNAME_MIN = 3;
+export const USERNAME_MIN = 1;
 export const USERNAME_MAX = 30;
 export const USERNAME_PATTERN = /^[a-zA-Z0-9_.]+$/;
-export const USERNAME_HINT = "3 to 30 letters, numbers, dots or underscores. Not case-sensitive.";
+export const USERNAME_HINT = "1 to 30 letters, numbers, dots or underscores. Not case-sensitive.";
 
 /** "Dr.Ahmed" and "dr.ahmed" are the same account; stored lowercase, as the plugin does. */
 export function normalizeUsername(raw: string): string {

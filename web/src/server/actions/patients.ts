@@ -2,11 +2,13 @@
 
 import { and, desc, eq } from "drizzle-orm";
 import { schema } from "@/db";
+import { deleteObject } from "@/lib/storage";
 import {
   addMedicationSchema,
   admitSchema,
   bedsideSchema,
   chartSchema,
+  deleteArchivedSchema,
   dischargeSchema,
   insulinSchema,
   readmitSchema,
@@ -14,7 +16,7 @@ import {
 } from "@/lib/validation";
 import { ActionError, audit, guardedUpdate, requireActiveAdmission, runAction, type ActionResult } from "../action";
 
-const { abgReading, admission, bed, insulinRegimen, medication, shiftRoster } = schema;
+const { abgReading, admission, bed, insulinRegimen, labMedia, medication, shiftRoster } = schema;
 
 export async function admitPatient(raw: unknown): Promise<ActionResult<{ admissionId: string }>> {
   return runAction("patient.admit", admitSchema, raw, async ({ staff, input, db }) =>
@@ -220,4 +222,24 @@ export async function readmitPatient(raw: unknown): Promise<ActionResult> {
       await audit(tx, staff, "admission.readmit", "admission", input.admissionId, before, after);
     }),
   );
+}
+
+/** Permanently remove a discharged admission (and cascaded chart rows) from the archive. */
+export async function deleteArchivedAdmission(raw: unknown): Promise<ActionResult> {
+  return runAction("archive.delete", deleteArchivedSchema, raw, async ({ staff, input, db }) => {
+    const objectKeys = await db.transaction(async (tx) => {
+      const [before] = await tx.select().from(admission).where(eq(admission.id, input.admissionId)).for("update");
+      if (!before) throw new ActionError("not_found", "That record no longer exists.");
+      if (before.status !== "discharged") {
+        throw new ActionError("invalid_state", "Only discharged records can be deleted. Discharge the patient first.");
+      }
+      const media = await tx.select({ objectKey: labMedia.objectKey }).from(labMedia).where(eq(labMedia.admissionId, input.admissionId));
+      await tx.delete(admission).where(eq(admission.id, input.admissionId));
+      await audit(tx, staff, "admission.delete", "admission", input.admissionId, before, null);
+      return media.map((m) => m.objectKey);
+    });
+    for (const key of objectKeys) {
+      await deleteObject(key).catch((e) => console.warn("Could not delete object", key, e));
+    }
+  });
 }
