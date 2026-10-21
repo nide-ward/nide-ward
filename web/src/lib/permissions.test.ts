@@ -1,29 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { can } from "./permissions";
+import { CLINICAL_ROLES, PERMISSIONS, can, type Permission } from "./permissions";
+
+const ALL = Object.keys(PERMISSIONS) as Permission[];
+const CLINICAL: Permission[] = [
+  "abg.record", "bedside.record", "media.attach", "abg.delete", "media.delete", "patient.admit",
+  "chart.edit", "insulin.edit", "drugs.edit", "patient.discharge", "archive.readmit",
+];
+const PROFILE: Permission[] = ["profile.theme", "profile.password"];
 
 describe("permissions", () => {
-  it("nurse can record but not admit, edit or discharge", () => {
-    expect(can("nurse", "abg.record")).toBe(true);
-    expect(can("nurse", "bedside.record")).toBe(true);
-    expect(can("nurse", "media.attach")).toBe(true);
-    expect(can("nurse", "patient.admit")).toBe(false);
-    expect(can("nurse", "chart.edit")).toBe(false);
-    expect(can("nurse", "insulin.edit")).toBe(false);
-    expect(can("nurse", "patient.discharge")).toBe(false);
+  it("has exactly the roles admin, attending and resident", () => {
+    expect([...CLINICAL_ROLES].sort()).toEqual(["admin", "attending", "resident"]);
   });
-  it("resident gets clinical operations but not roster or staff", () => {
-    for (const p of ["patient.admit", "chart.edit", "insulin.edit", "drugs.edit", "patient.discharge", "abg.record"] as const) {
-      expect(can("resident", p)).toBe(true);
-    }
-    expect(can("resident", "roster.edit")).toBe(false);
-    expect(can("resident", "staff.manage")).toBe(false);
+  it("admin can do everything", () => {
+    for (const p of ALL) expect(can("admin", p)).toBe(true);
   });
-  it("attending can do everything", () => {
-    expect(can("attending", "roster.edit")).toBe(true);
-    expect(can("attending", "staff.manage")).toBe(true);
-    expect(can("attending", "patient.discharge")).toBe(true);
+  for (const role of ["attending", "resident"] as const) {
+    it(`${role} can do every clinical action and edit the roster, but not manage staff`, () => {
+      for (const p of CLINICAL) expect(can(role, p)).toBe(true);
+      expect(can(role, "roster.edit")).toBe(true);
+      expect(can(role, "staff.manage")).toBe(false);
+    });
+  }
+  it("every role has the profile permissions", () => {
+    for (const role of CLINICAL_ROLES) for (const p of PROFILE) expect(can(role, p)).toBe(true);
   });
-  it("denies when there is no role", () => {
+  it("only admin has staff.manage", () => {
+    expect(CLINICAL_ROLES.filter((r) => can(r, "staff.manage"))).toEqual(["admin"]);
+  });
+  it("denies unknown or missing roles", () => {
     expect(can(null, "abg.record")).toBe(false);
+    expect(can("nurse" as never, "abg.record")).toBe(false);
   });
 });

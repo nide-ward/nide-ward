@@ -5,7 +5,7 @@ import { changeOwnPasswordSchema, usernameSchema } from "./validation";
 describe("usernameSchema", () => {
   it("accepts letters, numbers, dots and underscores and stores them lowercase", () => {
     expect(usernameSchema.parse("Dr.Ahmed_2")).toBe("dr.ahmed_2");
-    expect(usernameSchema.parse("  nurse.mona ")).toBe("nurse.mona");
+    expect(usernameSchema.parse("  resident.mona ")).toBe("resident.mona");
   });
 
   it("rejects too short, too long and other characters", () => {

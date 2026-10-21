@@ -91,7 +91,7 @@ export async function updateChart(raw: unknown): Promise<ActionResult<{ version:
 
 /**
  * Fingerstick RBG and urine acetone. Nurses may do this, so it is deliberately outside the
- * version-guarded chart document: a nurse logging acetone must not conflict with a resident editing the plan.
+ * version-guarded chart document: a resident logging acetone must not conflict with an attending editing the plan.
  */
 export async function recordBedside(raw: unknown): Promise<ActionResult> {
   return runAction("bedside.record", bedsideSchema, raw, async ({ staff, input, db }) =>

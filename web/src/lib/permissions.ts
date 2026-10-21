@@ -1,32 +1,35 @@
-export type ClinicalRole = "attending" | "resident" | "nurse";
-export const CLINICAL_ROLES: ClinicalRole[] = ["attending", "resident", "nurse"];
+export type ClinicalRole = "admin" | "attending" | "resident";
+export const CLINICAL_ROLES: ClinicalRole[] = ["admin", "attending", "resident"];
+
+const ALL: readonly ClinicalRole[] = ["admin", "attending", "resident"];
+const ADMIN_ONLY: readonly ClinicalRole[] = ["admin"];
 
 /**
- * Mirrors ROLE_PERMISSIONS in the prototype, made explicit per action.
- *  nurse     : record ABG / RBG / urine ketones, attach lab photos
- *  resident  : everything a nurse can + admit, edit chart, insulin, drugs, discharge
- *  attending : everything + shift roster + staff management
- * This file is pure so both the UI (to hide controls) and the server (to enforce) share it.
- * The server check is the one that counts.
+ * Per-action permission matrix.
+ *  admin     : everything, including staff management
+ *  attending : every clinical action and the shift roster
+ *  resident  : every clinical action and the shift roster
+ * Only staff management is restricted to admin. This file is pure so both the UI (to hide controls)
+ * and the server (to enforce) share it. The server check is the one that counts.
  */
 export const PERMISSIONS = {
-  "abg.record": ["nurse", "resident", "attending"],
-  "bedside.record": ["nurse", "resident", "attending"],
-  "media.attach": ["nurse", "resident", "attending"],
-  "abg.delete": ["resident", "attending"],
-  "media.delete": ["resident", "attending"],
-  "patient.admit": ["resident", "attending"],
-  "chart.edit": ["resident", "attending"],
-  "insulin.edit": ["resident", "attending"],
-  "drugs.edit": ["resident", "attending"],
-  "patient.discharge": ["resident", "attending"],
-  "archive.readmit": ["resident", "attending"],
-  "roster.edit": ["attending"],
-  "staff.manage": ["attending"],
+  "abg.record": ALL,
+  "bedside.record": ALL,
+  "media.attach": ALL,
+  "abg.delete": ALL,
+  "media.delete": ALL,
+  "patient.admit": ALL,
+  "chart.edit": ALL,
+  "insulin.edit": ALL,
+  "drugs.edit": ALL,
+  "patient.discharge": ALL,
+  "archive.readmit": ALL,
+  "roster.edit": ALL,
+  "staff.manage": ADMIN_ONLY,
   // Every signed-in role can choose its own light, dark or system theme.
-  "profile.theme": ["nurse", "resident", "attending"],
+  "profile.theme": ALL,
   // Every signed-in role sets its own password (required on first sign-in and after a reset).
-  "profile.password": ["nurse", "resident", "attending"],
+  "profile.password": ALL,
 } as const satisfies Record<string, readonly ClinicalRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -37,16 +40,16 @@ export function can(role: ClinicalRole | null | undefined, permission: Permissio
 }
 
 export const ROLE_INFO: Record<ClinicalRole, { title: string; desc: string }> = {
+  admin: {
+    title: "Administrator",
+    desc: "Everything: all clinical actions, the shift roster, and staff management (create, edit, deactivate, reset passwords, delete).",
+  },
   attending: {
     title: "Attending consultant",
-    desc: "Full ward authority: admissions, clinical overrides, shift roster, archive and staff management.",
+    desc: "All clinical actions: admissions, chart, insulin, drugs, blood gases, discharge and the archive, plus the shift roster.",
   },
   resident: {
     title: "Duty resident or fellow",
-    desc: "Clinical ward operations: admissions, serial ABG recording, insulin titration, drug sheets and discharge to the archive.",
-  },
-  nurse: {
-    title: "Ward nurse or POCT operator",
-    desc: "Bedside monitoring: serial blood gas entry, fingerstick RBG, urine acetone logging and lab photo attachment.",
+    desc: "All clinical actions: admissions, chart, insulin, drugs, blood gases, discharge and the archive, plus the shift roster.",
   },
 };

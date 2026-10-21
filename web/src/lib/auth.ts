@@ -61,6 +61,6 @@ export function getAuth() {
 }
 export type Auth = ReturnType<typeof getAuth>;
 
-/** Better Auth platform role for each clinical role. Only attendings are platform admins. */
-export const platformRoleFor = (clinicalRole: "attending" | "resident" | "nurse") =>
-  clinicalRole === "attending" ? "admin" : "user";
+/** Better Auth platform role for each clinical role. Only the admin role is a platform admin. */
+export const platformRoleFor = (clinicalRole: "admin" | "attending" | "resident") =>
+  clinicalRole === "admin" ? "admin" : "user";

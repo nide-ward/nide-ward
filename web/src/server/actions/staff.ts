@@ -14,7 +14,7 @@ const { staffProfile } = schema;
 const USERNAME_TAKEN = "That username is already taken. Choose another.";
 
 /**
- * Attending-only. Creates the Better Auth credential (admin plugin) and the clinical profile.
+ * Admin-only. Creates the Better Auth credential (admin plugin) and the clinical profile.
  * The password is temporary: the new user must replace it on first sign-in.
  */
 export async function createStaff(raw: unknown): Promise<ActionResult<{ userId: string }>> {
@@ -66,16 +66,16 @@ export async function updateStaff(raw: unknown): Promise<ActionResult> {
     const [before] = await db.select().from(staffProfile).where(eq(staffProfile.userId, input.userId));
     if (!before) throw new ActionError("not_found", "That staff member no longer exists.");
 
-    const losingAttending = before.clinicalRole === "attending" && before.active && (role !== "attending" || !input.active);
-    if (losingAttending) {
+    const losingAdmin = before.clinicalRole === "admin" && before.active && (role !== "admin" || !input.active);
+    if (losingAdmin) {
       if (input.userId === staff.userId) {
-        throw new ActionError("invalid_state", "You cannot demote or deactivate your own attending account.");
+        throw new ActionError("invalid_state", "You cannot demote or deactivate your own admin account.");
       }
       const [{ n }] = await db
         .select({ n: count() })
         .from(staffProfile)
-        .where(and(eq(staffProfile.clinicalRole, "attending"), eq(staffProfile.active, true)));
-      if (n <= 1) throw new ActionError("invalid_state", "There must be at least one active attending.");
+        .where(and(eq(staffProfile.clinicalRole, "admin"), eq(staffProfile.active, true)));
+      if (n <= 1) throw new ActionError("invalid_state", "There must be at least one active admin.");
     }
 
     await db.transaction(async (tx) => {
@@ -104,7 +104,7 @@ export async function updateStaff(raw: unknown): Promise<ActionResult> {
 }
 
 /**
- * Attending-only. Permanently deletes the login (user row; sessions, accounts and the staff
+ * Admin-only. Permanently deletes the login (user row; sessions, accounts and the staff
  * profile cascade). Clinical records keep the recorder's name as text, so history is untouched.
  * The delete and its audit row commit together.
  */
@@ -122,14 +122,14 @@ export async function deleteStaff(raw: unknown): Promise<ActionResult> {
         .for("update");
       if (!before) throw new ActionError("not_found", "That staff member no longer exists.");
 
-      if (before.profile.clinicalRole === "attending" && before.profile.active) {
-        // Lock every active attending so two attendings cannot delete each other at once.
-        const attendings = await tx
+      if (before.profile.clinicalRole === "admin" && before.profile.active) {
+        // Lock every active admin so two admins cannot delete each other at once.
+        const admins = await tx
           .select({ userId: staffProfile.userId })
           .from(staffProfile)
-          .where(and(eq(staffProfile.clinicalRole, "attending"), eq(staffProfile.active, true)))
+          .where(and(eq(staffProfile.clinicalRole, "admin"), eq(staffProfile.active, true)))
           .for("update");
-        if (attendings.length <= 1) throw new ActionError("invalid_state", "There must be at least one active attending.");
+        if (admins.length <= 1) throw new ActionError("invalid_state", "There must be at least one active admin.");
       }
 
       await tx.delete(schema.user).where(eq(schema.user.id, input.userId));
@@ -138,7 +138,7 @@ export async function deleteStaff(raw: unknown): Promise<ActionResult> {
   });
 }
 
-/** Attending-only. Sets a temporary password, signs the user out everywhere, and makes them replace it at next sign-in. */
+/** Admin-only. Sets a temporary password, signs the user out everywhere, and makes them replace it at next sign-in. */
 export async function resetStaffPassword(raw: unknown): Promise<ActionResult> {
   return runAction("staff.manage", resetPasswordSchema, raw, async ({ staff, input, db }) => {
     const auth = getAuth();
