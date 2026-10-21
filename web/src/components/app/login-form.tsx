@@ -26,14 +26,15 @@ export function LoginForm() {
           const { error } = await authClient.signIn.username({ username: username.trim(), password });
           if (error) {
             setError(error.status === 429 ? "Too many attempts. Wait a minute and try again." : "That username and password do not match an active account.");
+            setPending(false);
             return;
           }
+          // Stay in the pending state: the spinner runs until the next page replaces this form.
           // The app sends a temporary password on to the "set your password" screen.
           router.push("/");
           router.refresh();
         } catch {
           setError("Could not reach the server. Check the connection and try again.");
-        } finally {
           setPending(false);
         }
       }}

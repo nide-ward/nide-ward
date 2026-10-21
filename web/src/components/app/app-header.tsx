@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Archive, BedDouble, Building2, CalendarClock, LogOut, Users } from "lucide-react";
+import Button from "@/components/arc/button/button";
 import { authClient } from "@/lib/auth-client";
 import { can, ROLE_INFO, type ClinicalRole } from "@/lib/permissions";
 import type { Theme } from "@/lib/theme";
@@ -24,7 +26,6 @@ interface Props {
  */
 export function AppHeader({ name, role, roster, theme }: Props) {
   const pathname = usePathname();
-  const router = useRouter();
   const links = [
     { href: "/", label: "Ward board", short: "Board", icon: BedDouble, show: true },
     { href: "/archive", label: "Archive", short: "Archive", icon: Archive, show: true },
@@ -36,17 +37,20 @@ export function AppHeader({ name, role, roster, theme }: Props) {
     ? `Duty: ${roster.doc1}${roster.doc2 ? ` and ${roster.doc2}` : ""}. Attending: ${roster.attending}`
     : "No shift roster set yet";
 
+  const [signingOut, setSigningOut] = useState(false);
   async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
     // Do not pass the click event into authClient.signOut — Better Auth treats the
     // first argument as the request body and JSON-serializing a SyntheticEvent throws.
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/login");
-          router.refresh();
-        },
-      },
-    });
+    try {
+      await authClient.signOut();
+    } catch {
+      // Fall through: still leave the page; the server will reject a dead session.
+    }
+    // Full page load so cookies and cached server components are reset on phone and desktop.
+    // The spinner stays on until the browser leaves this page.
+    window.location.assign("/login");
   }
 
   return (
@@ -66,21 +70,27 @@ export function AppHeader({ name, role, roster, theme }: Props) {
             <div className="flex shrink-0 items-center gap-2">
               <CairoClock className="hidden text-sm text-topbar-ink sm:inline" />
               <ThemePicker initial={theme} />
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
+                loading={signingOut}
                 onClick={() => void signOut()}
-                className="hidden min-h-8 items-center rounded-lg border border-topbar-border bg-topbar-control px-3 text-sm text-topbar-strong hover:bg-topbar-border sm:inline-flex"
+                className="hidden cursor-pointer sm:inline-flex"
               >
                 Sign out
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
+                loading={signingOut}
                 onClick={() => void signOut()}
-                className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-topbar-border bg-topbar-control text-topbar-ink sm:hidden"
+                className="cursor-pointer touch-manipulation sm:hidden"
                 aria-label="Sign out"
               >
                 <LogOut size={18} aria-hidden="true" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -24,6 +24,12 @@ function create() {
   const maxAgeSeconds = env.SESSION_MAX_AGE_MINUTES * 60;
   return betterAuth({
     baseURL: env.BETTER_AUTH_URL,
+    trustedOrigins: [
+      env.BETTER_AUTH_URL,
+      "https://nideward.vercel.app",
+      "http://localhost:3000",
+      ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+    ],
     secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(getDb(), { provider: "pg", schema }),
     emailAndPassword: {
