@@ -16,7 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
-export const clinicalRoleEnum = pgEnum("clinical_role", ["attending", "resident", "nurse"]);
+export const clinicalRoleEnum = pgEnum("clinical_role", ["admin", "attending", "resident"]);
 export const bedTypeEnum = pgEnum("bed_type", ["regular", "extra", "paid", "overflow"]);
 export const admissionStatusEnum = pgEnum("admission_status", ["active", "discharged"]);
 export const urineAcetoneEnum = pgEnum("urine_acetone", ["Negative", "Trace", "+", "++", "+++", "++++"]);

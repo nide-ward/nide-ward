@@ -15,7 +15,7 @@ bun install
 cp .env.example .env.local   # then fill it in, see below
 bun run db:migrate              # apply the SQL in ./drizzle to your Neon database
 bun run db:seed                 # wards and beds (idempotent)
-bun run admin:create            # first attending, from SEED_ADMIN_* variables
+bun run admin:create            # first admin, from SEED_ADMIN_* variables
 bun run dev
 ```
 
@@ -60,9 +60,9 @@ The client is provider-agnostic and is configured with the standard AWS SDK vari
 
 Viewing photos does not need CORS: the page loads `<img src="/api/media/<id>">`, which checks the session and redirects to a presigned GET.
 
-## 4. Create the first attending
+## 4. Create the first admin
 
-Staff sign in with a **username** and password; there is no public sign-up and no email sign-in. Put `SEED_ADMIN_USERNAME`, `SEED_ADMIN_PASSWORD` (10 or more characters), `SEED_ADMIN_NAME` and optionally `SEED_ADMIN_BADGE` in `.env.local` (never on Vercel; the app never reads them), then run `bun run admin:create`. It creates the Better Auth user (admin plugin, role `admin`) and an attending `staff_profile`, and refuses to run if an attending already exists. The seeded password is temporary: sign in and you are asked to set your own. Then delete `SEED_ADMIN_PASSWORD` from `.env.local`. Further accounts are created on the **Staff** screen (attending only), the same way: username plus a temporary password that the person replaces at first sign-in. A password reset by an attending makes it temporary again.
+Staff sign in with a **username** and password; there is no public sign-up and no email sign-in. Put `SEED_ADMIN_USERNAME`, `SEED_ADMIN_PASSWORD` (10 or more characters), `SEED_ADMIN_NAME` and optionally `SEED_ADMIN_BADGE` in `.env.local` (never on Vercel; the app never reads them), then run `bun run admin:create`. It creates the Better Auth user (admin plugin, role `admin`) and an admin `staff_profile`, and refuses to run if an admin already exists. The seeded password is temporary: sign in and you are asked to set your own. Then delete `SEED_ADMIN_PASSWORD` from `.env.local`. Further accounts are created on the **Staff** screen (admin only), the same way: username plus a temporary password that the person replaces at first sign-in. A password reset by an admin makes it temporary again.
 
 Usernames are unique, case-insensitive, 3 to 30 letters, numbers, dots or underscores, and cannot be changed (Better Auth `username` plugin with `immutableUsername`). Better Auth still requires an email per user, so each gets a never-used placeholder on the reserved `.invalid` domain (`src/lib/username.ts`); `/sign-in/email` and `/is-username-available` are disabled.
 
@@ -80,7 +80,7 @@ Vercel detects `bun.lock` and installs with Bun; functions run on Node. Vercel's
 
 ## How it works
 
-- **Roles** (`src/lib/permissions.ts`, mirrors `ROLE_PERMISSIONS` in the prototype): nurse records ABG, RBG, urine acetone and attaches lab photos. Resident adds admissions, chart, insulin, drugs, discharge and photo/ABG deletion. Attending adds shift roster and staff management. Every server action goes through `runAction` (`src/server/action.ts`), which authenticates, checks the permission, validates with zod and only then runs the handler. Hiding a button in the UI is convenience, not security.
+- **Roles** (`src/lib/permissions.ts`): three roles. **Admin** can do everything, including staff management (create, edit, deactivate, reset password, delete). **Attending** and **resident** are the clinical roles: both can admit, edit the chart, insulin and drugs, record blood gases and bedside readings, attach and delete photos and ABG readings, discharge and re-admit. Everyone can edit the shift roster, and every role sets its own theme and password. At least one active admin must always exist. Every server action goes through `runAction` (`src/server/action.ts`), which authenticates, checks the permission, validates with zod and only then runs the handler. Hiding a button in the UI is convenience, not security.
 - **Audit**: every mutation writes an `audit_log` row (actor, action, entity, before/after JSON) in the same transaction as the change.
 - **Concurrency**: `admission.version` guards the chart document (patient details, plan, insulin, drug sheet). A stale save fails with "someone else updated this chart" and the chart shows a banner to load the latest version. ABG readings, photos and bedside RBG/acetone are append or last-write operations and do not conflict with chart edits.
 - **Database clients** (`src/db/index.ts`): page reads use Neon's HTTP driver (`getReadDb`), one HTTPS request per query with no connection to open. Writes, transactions and Better Auth use node-postgres over TCP (`getDb`) with a small pool, attached to Vercel Fluid compute via `attachDatabasePool`.

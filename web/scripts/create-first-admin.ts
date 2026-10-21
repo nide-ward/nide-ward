@@ -5,10 +5,10 @@ import { seedAdminEnv } from "../src/lib/env";
 import { placeholderEmail } from "../src/lib/username";
 
 /**
- * Creates the first attending from SEED_ADMIN_* environment variables (local .env.local only,
+ * Creates the first admin from SEED_ADMIN_* environment variables (local .env.local only,
  * never on Vercel). Public sign-up is disabled, so this (and the Staff screen afterwards) is the
- * only way accounts appear. The seeded password is temporary: the attending sets their own at
- * first sign-in. Refuses to run when an attending already exists.
+ * only way accounts appear. The seeded password is temporary: the admin sets their own at
+ * first sign-in. Refuses to run when an admin already exists.
  */
 async function main() {
   const env = seedAdminEnv();
@@ -17,9 +17,9 @@ async function main() {
   const existing = await db
     .select({ id: schema.staffProfile.userId })
     .from(schema.staffProfile)
-    .where(eq(schema.staffProfile.clinicalRole, "attending"));
+    .where(eq(schema.staffProfile.clinicalRole, "admin"));
   if (existing.length > 0) {
-    console.log("An attending already exists. Nothing to do. Manage staff from the Staff screen.");
+    console.log("An admin already exists. Nothing to do. Manage staff from the Staff screen.");
     process.exit(0);
   }
 
@@ -37,7 +37,7 @@ async function main() {
     userId: user.id,
     displayName: env.SEED_ADMIN_NAME,
     badgeNo: env.SEED_ADMIN_BADGE ?? null,
-    clinicalRole: "attending",
+    clinicalRole: "admin",
     mustChangePassword: true,
   });
   await db.insert(schema.auditLog).values({
@@ -47,9 +47,9 @@ async function main() {
     entity: "staff_profile",
     entityId: user.id,
     before: null,
-    after: { username, clinicalRole: "attending" },
+    after: { username, clinicalRole: "admin" },
   });
-  console.log(`Created attending "${username}". Sign in, set your own password, then delete SEED_ADMIN_PASSWORD from .env.local.`);
+  console.log(`Created admin "${username}". Sign in, set your own password, then delete SEED_ADMIN_PASSWORD from .env.local.`);
   process.exit(0);
 }
 

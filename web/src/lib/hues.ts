@@ -48,13 +48,13 @@ export const wardHue = (wardId: string): Hue => WARD_HUE[wardId] ?? "teal";
  *   protocol   shift ready teal, shift halted rose, IM insulin amber, no ABG neutral; stop fluids emerald, continue fluids amber
  *   insulin    Lantus purple, Actrapid amber
  *   lab photos cyan
- *   roles      attending purple, resident teal, nurse sky
+ *   roles      admin purple, attending teal, resident sky
  *   staff      active emerald, deactivated neutral
  *   discharge  discharged neutral (slate); outcome home emerald, general ward sky, ICU rose, DAMA amber, outside facility indigo
  *   acetone    negative emerald, trace sky, + amber, ++ amber, +++ and ++++ rose
  */
 export const BED_TYPE_HUE: Record<"regular" | "extra" | "paid" | "overflow", Hue | undefined> = { regular: undefined, extra: "amber", paid: "indigo", overflow: "rose" };
-export const ROLE_HUE: Record<"attending" | "resident" | "nurse", Hue> = { attending: "purple", resident: "teal", nurse: "sky" };
+export const ROLE_HUE: Record<"admin" | "attending" | "resident", Hue> = { admin: "purple", attending: "teal", resident: "sky" };
 export const ACETONE_HUE: Record<string, Hue> = { Negative: "emerald", Trace: "sky", "+": "amber", "++": "amber", "+++": "rose", "++++": "rose" };
 
 /** Matches the DISCHARGE_OUTCOMES wording in validation.ts; anything else (older records) stays neutral. */

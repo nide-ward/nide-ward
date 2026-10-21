@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/arc/tabs/
 import { outcomeHue, wardHue, HUE } from "@/lib/hues";
 import { NO_DIAGNOSIS, ageText, isBlank, patientLabel } from "@/lib/display";
 import { readmitPatient } from "@/server/actions/patients";
-import type { ClinicalRole } from "@/lib/permissions";
+import { can, type ClinicalRole } from "@/lib/permissions";
 import { formatCairo } from "@/lib/time";
 import { AbgDueBadge, AbgSection, type AbgRowData } from "./abg-section";
 import { ChartProvider, useChart } from "./chart-context";
@@ -55,7 +55,7 @@ function ReadmitButton() {
   const chart = useChart();
   const { toast } = useToast();
   const { run, pending, error } = useAction();
-  if (!chart.readOnly || !(chart.role === "resident" || chart.role === "attending")) return null;
+  if (!chart.readOnly || !can(chart.role, "archive.readmit")) return null;
   return (
     <div className="grid gap-2">
       <Button

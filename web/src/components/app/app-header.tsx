@@ -28,7 +28,7 @@ export function AppHeader({ name, role, roster, theme }: Props) {
   const links = [
     { href: "/", label: "Ward board", short: "Board", icon: BedDouble, show: true },
     { href: "/archive", label: "Archive", short: "Archive", icon: Archive, show: true },
-    { href: "/roster", label: "Shift roster", short: "Roster", icon: CalendarClock, show: can(role, "roster.edit") },
+    { href: "/roster", label: "Shift roster", short: "Roster", icon: CalendarClock, show: true },
     { href: "/staff", label: "Staff", short: "Staff", icon: Users, show: can(role, "staff.manage") },
   ].filter((l) => l.show);
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
