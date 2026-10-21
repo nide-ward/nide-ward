@@ -15,7 +15,7 @@ export default async function StaffPage() {
       </div>
       <StaffManager
         selfId={me.userId}
-        rows={rows.map((r) => ({ userId: r.userId, email: r.email, displayName: r.displayName, badgeNo: r.badgeNo, clinicalRole: r.clinicalRole, active: r.active }))}
+        rows={rows.map((r) => ({ userId: r.userId, username: r.username, displayName: r.displayName, mustChangePassword: r.mustChangePassword, badgeNo: r.badgeNo, clinicalRole: r.clinicalRole, active: r.active }))}
       />
     </div>
   );

@@ -10,12 +10,16 @@ import { can, type ClinicalRole, type Permission } from "./permissions";
 
 export interface Staff {
   userId: string;
-  email: string;
+  username: string;
   displayName: string;
   badgeNo: string | null;
   role: ClinicalRole;
   theme: Theme;
+  /** True until the user replaces the temporary password an attending gave them. */
+  mustChangePassword: boolean;
 }
+
+export const CHANGE_PASSWORD_PATH = "/change-password";
 
 /**
  * The signed-in, active staff member for this request, or null.
@@ -32,18 +36,23 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
   if (!profile || !profile.active) return null;
   return {
     userId: session.user.id,
-    email: session.user.email,
+    username: session.user.username ?? "",
     displayName: profile.displayName,
     badgeNo: profile.badgeNo,
     role: profile.clinicalRole,
     theme: parseTheme(profile.theme),
+    mustChangePassword: profile.mustChangePassword,
   };
 });
 
-/** For pages: redirect to /login when signed out, and to the board when the role lacks permission. */
+/**
+ * For pages: redirect to /login when signed out, to the password screen while a temporary
+ * password is still in use, and to the board when the role lacks permission.
+ */
 export async function requireStaff(permission?: Permission): Promise<Staff> {
   const staff = await getStaff();
   if (!staff) redirect("/login");
+  if (staff.mustChangePassword) redirect(CHANGE_PASSWORD_PATH);
   if (permission && !can(staff.role, permission)) redirect("/");
   return staff;
 }

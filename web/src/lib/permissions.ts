@@ -25,6 +25,8 @@ export const PERMISSIONS = {
   "staff.manage": ["attending"],
   // Every signed-in role can choose its own light, dark or system theme.
   "profile.theme": ["nurse", "resident", "attending"],
+  // Every signed-in role sets its own password (required on first sign-in and after a reset).
+  "profile.password": ["nurse", "resident", "attending"],
 } as const satisfies Record<string, readonly ClinicalRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

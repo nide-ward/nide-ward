@@ -5,40 +5,50 @@ import { and, count, eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { getAuth, platformRoleFor } from "@/lib/auth";
 import type { ClinicalRole } from "@/lib/permissions";
+import { placeholderEmail } from "@/lib/username";
 import { createStaffSchema, deleteStaffSchema, resetPasswordSchema, updateStaffSchema } from "@/lib/validation";
 import { ActionError, audit, runAction, type ActionResult } from "../action";
 
 const { staffProfile } = schema;
 
-/** Attending-only. Creates the Better Auth credential (admin plugin) and the clinical profile. */
+const USERNAME_TAKEN = "That username is already taken. Choose another.";
+
+/**
+ * Attending-only. Creates the Better Auth credential (admin plugin) and the clinical profile.
+ * The password is temporary: the new user must replace it on first sign-in.
+ */
 export async function createStaff(raw: unknown): Promise<ActionResult<{ userId: string }>> {
   return runAction("staff.manage", createStaffSchema, raw, async ({ staff, input, db }) => {
     const role = input.role as ClinicalRole;
     const auth = getAuth();
+    // input.username is already validated and lowercased by the schema; the unique column is the final guard.
+    const [taken] = await db.select({ id: schema.user.id }).from(schema.user).where(eq(schema.user.username, input.username));
+    if (taken) throw new ActionError("conflict", USERNAME_TAKEN);
     let userId: string;
     try {
       const created = await auth.api.createUser({
         body: {
-          email: input.email,
+          email: placeholderEmail(input.username),
           password: input.password,
           name: input.displayName,
           role: platformRoleFor(role),
+          data: { username: input.username, displayUsername: input.username },
         },
         headers: await headers(),
       });
       userId = created.user.id;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      if (/exist/i.test(msg)) throw new ActionError("conflict", "An account with that email already exists.");
+      if (/exist|unique|duplicate/i.test(msg)) throw new ActionError("conflict", USERNAME_TAKEN);
       throw e;
     }
     try {
       await db.transaction(async (tx) => {
         const [profile] = await tx
           .insert(staffProfile)
-          .values({ userId, displayName: input.displayName, badgeNo: input.badgeNo || null, clinicalRole: role })
+          .values({ userId, displayName: input.displayName, badgeNo: input.badgeNo || null, clinicalRole: role, mustChangePassword: true })
           .returning();
-        await audit(tx, staff, "staff.create", "staff_profile", userId, null, { ...profile, email: input.email });
+        await audit(tx, staff, "staff.create", "staff_profile", userId, null, { ...profile, username: input.username });
       });
     } catch (e) {
       // Do not leave a credential without a profile behind.
@@ -105,7 +115,7 @@ export async function deleteStaff(raw: unknown): Promise<ActionResult> {
     }
     await db.transaction(async (tx) => {
       const [before] = await tx
-        .select({ profile: staffProfile, email: schema.user.email })
+        .select({ profile: staffProfile, username: schema.user.username })
         .from(staffProfile)
         .innerJoin(schema.user, eq(schema.user.id, staffProfile.userId))
         .where(eq(staffProfile.userId, input.userId))
@@ -123,11 +133,12 @@ export async function deleteStaff(raw: unknown): Promise<ActionResult> {
       }
 
       await tx.delete(schema.user).where(eq(schema.user.id, input.userId));
-      await audit(tx, staff, "staff.delete", "staff_profile", input.userId, { ...before.profile, email: before.email }, null);
+      await audit(tx, staff, "staff.delete", "staff_profile", input.userId, { ...before.profile, username: before.username }, null);
     });
   });
 }
 
+/** Attending-only. Sets a temporary password, signs the user out everywhere, and makes them replace it at next sign-in. */
 export async function resetStaffPassword(raw: unknown): Promise<ActionResult> {
   return runAction("staff.manage", resetPasswordSchema, raw, async ({ staff, input, db }) => {
     const auth = getAuth();
@@ -135,8 +146,9 @@ export async function resetStaffPassword(raw: unknown): Promise<ActionResult> {
     await auth.api.setUserPassword({ body: { userId: input.userId, newPassword: input.password }, headers: h });
     await auth.api.revokeUserSessions({ body: { userId: input.userId }, headers: h });
     await db.transaction(async (tx) => {
+      await tx.update(staffProfile).set({ mustChangePassword: true, updatedAt: new Date() }).where(eq(staffProfile.userId, input.userId));
       // The password itself is never logged.
-      await audit(tx, staff, "staff.reset_password", "staff_profile", input.userId, null, null);
+      await audit(tx, staff, "staff.reset_password", "staff_profile", input.userId, null, { mustChangePassword: true });
     });
   });
 }

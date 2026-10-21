@@ -62,7 +62,9 @@ Viewing photos does not need CORS: the page loads `<img src="/api/media/<id>">`,
 
 ## 4. Create the first attending
 
-Public sign-up is disabled. Put `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` (10 or more characters), `SEED_ADMIN_NAME` and optionally `SEED_ADMIN_BADGE` in the environment, then run `bun run admin:create`. It creates the Better Auth user (admin plugin, role `admin`) and an attending `staff_profile`. It refuses to run if an attending already exists. Sign in, then remove `SEED_ADMIN_PASSWORD` from the environment. Further accounts are created on the **Staff** screen (attending only).
+Staff sign in with a **username** and password; there is no public sign-up and no email sign-in. Put `SEED_ADMIN_USERNAME`, `SEED_ADMIN_PASSWORD` (10 or more characters), `SEED_ADMIN_NAME` and optionally `SEED_ADMIN_BADGE` in `.env.local` (never on Vercel; the app never reads them), then run `bun run admin:create`. It creates the Better Auth user (admin plugin, role `admin`) and an attending `staff_profile`, and refuses to run if an attending already exists. The seeded password is temporary: sign in and you are asked to set your own. Then delete `SEED_ADMIN_PASSWORD` from `.env.local`. Further accounts are created on the **Staff** screen (attending only), the same way: username plus a temporary password that the person replaces at first sign-in. A password reset by an attending makes it temporary again.
+
+Usernames are unique, case-insensitive, 3 to 30 letters, numbers, dots or underscores, and cannot be changed (Better Auth `username` plugin with `immutableUsername`). Better Auth still requires an email per user, so each gets a never-used placeholder on the reserved `.invalid` domain (`src/lib/username.ts`); `/sign-in/email` and `/is-username-available` are disabled.
 
 ## 5. Deploy to Vercel
 

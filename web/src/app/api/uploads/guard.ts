@@ -11,6 +11,7 @@ export type Guard = { ok: true; staffName: string } | { ok: false; status: numbe
 export async function guardUpload(admissionId: unknown, contentType: unknown, size: unknown): Promise<Guard> {
   const staff = await getStaff();
   if (!staff) return { ok: false, status: 401, error: "Sign in again." };
+  if (staff.mustChangePassword) return { ok: false, status: 403, error: "Set your own password first." };
   if (!can(staff.role, "media.attach")) return { ok: false, status: 403, error: "Your role cannot attach photos." };
   if (typeof admissionId !== "string" || !/^[0-9a-f-]{36}$/i.test(admissionId)) {
     return { ok: false, status: 400, error: "Invalid admission." };

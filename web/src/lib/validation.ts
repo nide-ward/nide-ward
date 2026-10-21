@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CLINICAL_ROLES } from "./permissions";
 import { THEMES } from "./theme";
+import { normalizeUsername, USERNAME_MAX, USERNAME_MIN, USERNAME_PATTERN } from "./username";
 
 /**
  * Shared zod schemas. The server actions re-validate everything; the same schemas are used by
@@ -151,12 +152,22 @@ export const rosterSchema = z.object({
   attending: reqText(120, "Attending"),
 });
 
+export const usernameSchema = z
+  .string()
+  .trim()
+  .min(USERNAME_MIN, `Username needs at least ${USERNAME_MIN} characters`)
+  .max(USERNAME_MAX, `Username can have at most ${USERNAME_MAX} characters`)
+  .regex(USERNAME_PATTERN, "Use only letters, numbers, dots and underscores")
+  .transform(normalizeUsername);
+
+const newPassword = z.string().min(10, "Use at least 10 characters").max(128);
+
 export const createStaffSchema = z.object({
-  email: z.email().max(200),
+  username: usernameSchema,
   displayName: reqText(120, "Name"),
   badgeNo: text(60).default(""),
   role: z.enum(CLINICAL_ROLES as [string, ...string[]]),
-  password: z.string().min(10, "Use at least 10 characters").max(128),
+  password: newPassword,
 });
 
 export const updateStaffSchema = z.object({
@@ -173,5 +184,16 @@ export const deleteStaffSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   userId: z.string().min(1),
-  password: z.string().min(10, "Use at least 10 characters").max(128),
+  password: newPassword,
 });
+
+/** The user replacing their own password (required while it is a temporary one). */
+export const changeOwnPasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password").max(128),
+    newPassword,
+  })
+  .refine((v) => v.newPassword !== v.currentPassword, {
+    message: "Choose a password different from the temporary one",
+    path: ["newPassword"],
+  });
