@@ -70,27 +70,31 @@ export function AppHeader({ name, role, roster, theme }: Props) {
             <div className="flex shrink-0 items-center gap-2">
               <CairoClock className="hidden text-sm text-topbar-ink sm:inline" />
               <ThemePicker initial={theme} />
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                loading={signingOut}
-                onClick={() => void signOut()}
-                className="hidden cursor-pointer sm:inline-flex"
-              >
-                Sign out
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                loading={signingOut}
-                onClick={() => void signOut()}
-                className="cursor-pointer touch-manipulation sm:hidden"
-                aria-label="Sign out"
-              >
-                <LogOut size={18} aria-hidden="true" />
-              </Button>
+              <span className="hidden sm:inline-flex">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  loading={signingOut}
+                  onClick={() => void signOut()}
+                  className="cursor-pointer"
+                >
+                  Sign out
+                </Button>
+              </span>
+              <span className="inline-flex sm:hidden">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  loading={signingOut}
+                  onClick={() => void signOut()}
+                  className="cursor-pointer touch-manipulation"
+                  aria-label="Sign out"
+                >
+                  <LogOut size={18} aria-hidden="true" />
+                </Button>
+              </span>
             </div>
           </div>
         </div>
