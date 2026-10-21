@@ -45,11 +45,11 @@ export const ROLE_INFO: Record<ClinicalRole, { title: string; desc: string }> = 
     desc: "Everything: all clinical actions, the shift roster, and staff management (create, edit, deactivate, reset passwords, delete).",
   },
   attending: {
-    title: "Attending consultant",
+    title: "Attending",
     desc: "All clinical actions: admissions, chart, insulin, drugs, blood gases, discharge and the archive, plus the shift roster.",
   },
   resident: {
-    title: "Duty resident or fellow",
+    title: "Resident",
     desc: "All clinical actions: admissions, chart, insulin, drugs, blood gases, discharge and the archive, plus the shift roster.",
   },
 };
