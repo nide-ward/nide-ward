@@ -7,17 +7,14 @@ import { storageEnv } from "./env";
 
 /**
  * Provider-agnostic S3 storage for lab photos (Neon Object Storage, Cloudflare R2, any S3 API).
- * When S3 environment variables are absent, falls back gracefully to local public/uploads directory.
+ * Outside production, an unset S3_BUCKET falls back to the local public/uploads directory so the app
+ * runs without a bucket. Production never falls back: the deployment filesystem is read-only and
+ * files written at runtime are not served, so a missing variable must surface as an error that names it.
  */
 let client: S3Client | undefined;
 
-export function isS3Configured(): boolean {
-  try {
-    const s = storageEnv();
-    return Boolean(s.S3_BUCKET);
-  } catch {
-    return false;
-  }
+function usesLocalDisk(): boolean {
+  return process.env.NODE_ENV !== "production" && !process.env.S3_BUCKET;
 }
 
 function getLocalPath(key: string): string {
@@ -39,20 +36,15 @@ function getClient(): S3Client {
 
 const bucket = () => storageEnv().S3_BUCKET;
 
-export const ALLOWED_IMAGE_TYPES = ["image/webp", "image/jpeg", "image/png"] as const;
-export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024; // photos are compressed to ~1600px WebP client-side, so this is generous
-
 const EXT: Record<string, string> = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" };
 
 export function newObjectKey(admissionId: string, contentType: string): string {
   return `lab/${admissionId}/${crypto.randomUUID()}.${EXT[contentType] ?? "bin"}`;
 }
 
-/** Presigned PUT for direct browser upload. Content type and length are signed, so they cannot be changed. */
+/** Presigned PUT for direct browser upload. The content length is signed, so it cannot be changed. */
 export async function presignPut(key: string, contentType: string, size: number): Promise<string> {
-  if (!isS3Configured()) {
-    throw new Error("Direct presigned upload requires S3. Use proxy upload mode.");
-  }
+  if (usesLocalDisk()) throw new Error("Direct presigned upload requires S3. Use proxy upload mode.");
   return getSignedUrl(
     getClient(),
     new PutObjectCommand({ Bucket: bucket(), Key: key, ContentType: contentType, ContentLength: size }),
@@ -60,63 +52,46 @@ export async function presignPut(key: string, contentType: string, size: number)
   );
 }
 
-/** Presigned GET with a short expiry for viewing. Falls back to local public URL if S3 is unconfigured. */
+/** Presigned GET with a short expiry for viewing, or the local public URL in local-disk mode. */
 export async function presignGet(key: string): Promise<string> {
-  if (isS3Configured()) {
-    return getSignedUrl(getClient(), new GetObjectCommand({ Bucket: bucket(), Key: key }), { expiresIn: 60 });
-  }
-  return `/uploads/${key}`;
+  if (usesLocalDisk()) return `/uploads/${key}`;
+  return getSignedUrl(getClient(), new GetObjectCommand({ Bucket: bucket(), Key: key }), { expiresIn: 60 });
 }
 
-/** Server-side upload, used by the proxy upload mode. Saves locally when S3 is not configured. */
+/** Server-side upload, used by the proxy upload route. Saves locally in local-disk mode. */
 export async function putObject(key: string, body: Uint8Array, contentType: string): Promise<void> {
-  if (isS3Configured()) {
-    await getClient().send(
-      new PutObjectCommand({ Bucket: bucket(), Key: key, Body: body, ContentType: contentType, ContentLength: body.byteLength }),
-    );
-  } else {
+  if (usesLocalDisk()) {
     const fullPath = getLocalPath(key);
     mkdirSync(dirname(fullPath), { recursive: true });
     writeFileSync(fullPath, body);
+    return;
   }
+  await getClient().send(
+    new PutObjectCommand({ Bucket: bucket(), Key: key, Body: body, ContentType: contentType, ContentLength: body.byteLength }),
+  );
 }
 
 /** Confirms an uploaded object exists and returns its real size and type. */
 export async function headObject(key: string): Promise<{ size: number; contentType: string | undefined } | null> {
-  if (isS3Configured()) {
-    try {
-      const r = await getClient().send(new HeadObjectCommand({ Bucket: bucket(), Key: key }));
-      return { size: r.ContentLength ?? 0, contentType: r.ContentType };
-    } catch {
-      return null;
-    }
-  } else {
+  if (usesLocalDisk()) {
     const fullPath = getLocalPath(key);
     if (!existsSync(fullPath)) return null;
-    try {
-      const st = statSync(fullPath);
-      return { size: st.size, contentType: key.endsWith(".webp") ? "image/webp" : "image/jpeg" };
-    } catch {
-      return null;
-    }
+    return { size: statSync(fullPath).size, contentType: undefined };
+  }
+  try {
+    const r = await getClient().send(new HeadObjectCommand({ Bucket: bucket(), Key: key }));
+    return { size: r.ContentLength ?? 0, contentType: r.ContentType };
+  } catch (e) {
+    console.error("head object failed", key, e);
+    return null;
   }
 }
 
 export async function deleteObject(key: string): Promise<void> {
-  if (isS3Configured()) {
-    try {
-      await getClient().send(new DeleteObjectCommand({ Bucket: bucket(), Key: key }));
-    } catch {
-      // Ignore
-    }
-  } else {
+  if (usesLocalDisk()) {
     const fullPath = getLocalPath(key);
-    if (existsSync(fullPath)) {
-      try {
-        unlinkSync(fullPath);
-      } catch {
-        // Ignore
-      }
-    }
+    if (existsSync(fullPath)) unlinkSync(fullPath);
+    return;
   }
+  await getClient().send(new DeleteObjectCommand({ Bucket: bucket(), Key: key }));
 }

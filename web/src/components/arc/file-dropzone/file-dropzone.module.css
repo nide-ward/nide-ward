@@ -97,6 +97,10 @@
 /* On the narrowest lists the type icon steps aside for the name and status. */
 @container dropzone-list (max-width: 300px) { .row { grid-template-columns: minmax(0, 1fr) auto; padding-left: 14px; } .fileIcon, .thumb { display: none; } }
 .remove { width: 32px; height: 32px; border-radius: var(--radius-pill); background: transparent; }
+@media (pointer: coarse), (any-pointer: coarse), (max-width: 639px) {
+  .retry { min-height: var(--control-height-md); min-width: var(--control-height-md); }
+  .remove { width: var(--control-height-md); height: var(--control-height-md); }
+}
 @media (hover: hover) and (pointer: fine) {
   .retry:hover { border-color: var(--border-strong); background: var(--surface-muted); }
   .remove:hover { background: var(--surface-muted); color: var(--foreground); }

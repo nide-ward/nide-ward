@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Archive, BedDouble, Building2, CalendarClock, LogOut, Users } from "lucide-react";
+import { Archive, BedDouble, Building2, CalendarClock, Loader2, LogOut, Users } from "lucide-react";
 import Button from "@/components/arc/button/button";
 import { authClient } from "@/lib/auth-client";
 import { can, ROLE_INFO, type ClinicalRole } from "@/lib/permissions";
@@ -60,19 +60,19 @@ export function AppHeader({ name, role, roster, theme }: Props) {
 
   return (
     <>
-      <header className="no-print w-full">
+      <header className="no-print w-full overflow-x-clip">
         {/* Dark slate bar with the teal accent, as in the prototype. */}
-        <div className="w-full bg-topbar pt-[env(safe-area-inset-top)] text-topbar-ink">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-3 py-2 sm:px-6">
-            <p className="flex min-w-0 items-center gap-2 text-sm">
+        <div className="w-full bg-topbar pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-topbar-ink">
+          <div className="mx-auto flex h-14 w-full max-w-7xl flex-nowrap items-center justify-between gap-2 px-3 sm:h-12 sm:gap-3 sm:px-6">
+            <p className="flex min-w-0 flex-1 items-center gap-2 text-sm">
               <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-topbar-accent" />
               <span className="truncate font-medium text-topbar-strong">
                 <span className="sm:hidden">NIDE ward tracker</span>
                 <span className="hidden sm:inline">National Institute for Diabetes and Endocrinology (NIDE)</span>
               </span>
-              <span className="hidden text-topbar-ink lg:inline">Inpatient ward and DKA unit</span>
+              <span className="hidden shrink-0 text-topbar-ink xl:inline">Inpatient ward and DKA unit</span>
             </p>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <CairoClock className="hidden text-sm text-topbar-ink sm:inline" />
               <SyncStatusPill />
               <ThemePicker initial={theme} />
@@ -88,40 +88,41 @@ export function AppHeader({ name, role, roster, theme }: Props) {
                   Sign out
                 </Button>
               </span>
-              <span className="inline-flex sm:hidden">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  loading={signingOut}
-                  onClick={() => void signOut()}
-                  className="cursor-pointer touch-manipulation"
-                  aria-label="Sign out"
-                >
+              <button
+                type="button"
+                disabled={signingOut}
+                onClick={() => void signOut()}
+                aria-label="Sign out"
+                title="Sign out"
+                className="inline-flex size-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-xl border border-topbar-border bg-topbar-control text-topbar-ink transition hover:text-topbar-strong disabled:opacity-60 sm:hidden"
+              >
+                {signingOut ? (
+                  <Loader2 size={18} aria-hidden="true" className="animate-spin" />
+                ) : (
                   <LogOut size={18} aria-hidden="true" />
-                </Button>
-              </span>
+                )}
+              </button>
             </div>
           </div>
         </div>
-        <div className="w-full border-b border-border bg-surface">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-x-6 gap-y-2 px-3 py-2.5 sm:flex-wrap sm:px-6 sm:py-3">
-            <div className="flex min-w-0 items-center gap-3">
+        <div className="w-full border-b border-border bg-surface pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+          <div className="mx-auto flex h-14 w-full max-w-7xl flex-nowrap items-center justify-between gap-3 px-3 sm:h-auto sm:gap-6 sm:px-6 sm:py-3">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               <span aria-hidden="true" className="hidden size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground sm:inline-flex">
                 <Building2 size={20} />
               </span>
-              <div className="min-w-0">
-                <p className="hidden text-lg font-medium sm:block">Ward patient tracker</p>
+              <div className="min-w-0 flex-1">
+                <p className="hidden truncate text-lg font-medium sm:block">Ward patient tracker</p>
                 {/* Phone: who is signed in, then the roster on one line. */}
-                <p className="truncate text-sm text-text-secondary sm:hidden">
+                <p className="truncate text-sm leading-5 text-text-secondary sm:hidden">
                   {name}, {ROLE_INFO[role].title.toLowerCase()}
                 </p>
-                <p className="truncate text-sm text-text-secondary">{rosterText}</p>
+                <p className="truncate text-sm leading-5 text-text-secondary">{rosterText}</p>
               </div>
             </div>
-            <div className="hidden flex-wrap items-center gap-3 sm:flex">
+            <div className="hidden shrink-0 items-center gap-3 sm:flex">
               <Pill hue={ROLE_HUE[role]}>{ROLE_INFO[role].title}</Pill>
-              <span className="text-sm font-medium">{name}</span>
+              <span className="max-w-[14rem] truncate text-sm font-medium">{name}</span>
             </div>
           </div>
           <nav aria-label="Main" className="mx-auto hidden max-w-7xl gap-1 overflow-x-auto px-6 pb-2 sm:flex">
@@ -141,22 +142,25 @@ export function AppHeader({ name, role, roster, theme }: Props) {
         </div>
       </header>
 
-      <nav aria-label="Main" className="no-print pb-safe fixed inset-x-0 bottom-0 z-40 w-full border-t border-border bg-surface sm:hidden">
+      <nav
+        aria-label="Main"
+        className="no-print pb-safe fixed inset-x-0 bottom-0 z-40 w-full border-t border-border bg-surface pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] sm:hidden"
+      >
         <ul className="flex w-full items-center justify-around">
           {links.map((l) => {
             const Icon = l.icon;
             const active = isActive(l.href);
             return (
-              <li key={l.href} className="flex-1">
+              <li key={l.href} className="min-w-0 flex-1">
                 <Link
                   href={l.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs ${
+                  className={`flex h-14 touch-manipulation flex-col items-center justify-center gap-0.5 px-1 text-xs ${
                     active ? "font-medium text-accent-strong" : "text-text-secondary"
                   }`}
                 >
                   <Icon size={22} aria-hidden="true" strokeWidth={active ? 2.25 : 1.75} />
-                  {l.short}
+                  <span className="max-w-full truncate">{l.short}</span>
                 </Link>
               </li>
             );

@@ -1,4 +1,4 @@
-.field { display: grid; gap: var(--space-2); min-width: 0; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); min-width: 0; }
 .field label { font-size: var(--text-sm); font-weight: 500; line-height: var(--leading-body); letter-spacing: var(--tracking-body); }
 /* Focus darkens the border; the shell never changes size. */
 .shell { display: flex; min-height: var(--control-height-md); align-items: center; gap: var(--space-2); border: 1px solid var(--border-strong); border-radius: var(--radius-control); padding: 0 var(--space-3); background: var(--surface); transition: border-color var(--duration-fast) var(--ease-standard); }
@@ -13,5 +13,6 @@
 .input::-webkit-search-cancel-button { display: none; }
 .clearSlot { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; }
 .shell button { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--text-muted); transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
+@media (pointer: coarse), (any-pointer: coarse), (max-width: 639px) { .shell { padding-right: 0; } .input { font-size: max(16px, 1rem); } .clearSlot, .shell button { width: var(--control-height-md); height: var(--control-height-md); } }
 @media (hover: hover) and (pointer: fine) { .shell button:hover { background: var(--surface-muted); color: var(--foreground); } }
 @media (prefers-reduced-motion: reduce) { .shell, .shell > svg, .shell button { transition: none; } }

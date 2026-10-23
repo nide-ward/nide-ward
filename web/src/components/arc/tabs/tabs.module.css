@@ -1,4 +1,4 @@
-.root { position: relative; }
+.root { position: relative; min-width: 0; }
 .listShell { position: relative; display: inline-flex; max-width: 100%; min-width: 0; align-items: center; isolation: isolate; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-muted); }
 .viewport { min-width: 0; overflow-x: auto; border-radius: inherit; scrollbar-width: none; }
 .viewport::-webkit-scrollbar { display: none; }
@@ -13,6 +13,7 @@
 .scrollButton:disabled { opacity: 0; pointer-events: none; }
 .scrollButton:focus-visible { --focus-outline-offset: -3px; }
 .trigger { position: relative; -webkit-tap-highlight-color: transparent; display: inline-grid; min-width: 5.5rem; place-items: center; flex: 0 0 auto; min-height: var(--control-height-sm); border: 0; border-radius: calc(var(--radius-control) - 3px); padding: 0 var(--space-3); background: transparent; color: var(--text-muted); font: inherit; font-size: var(--text-sm); font-weight: 500; white-space: nowrap; cursor: pointer; transition: color var(--duration-fast) var(--ease-standard); }
+@media (pointer: coarse), (any-pointer: coarse), (max-width: 639px) { .trigger { min-height: var(--control-height-md); min-width: 4.5rem; } .scrollButton { width: var(--control-height-md); } }
 @media (hover: hover) and (pointer: fine) { .trigger:hover { color: var(--foreground); } }
 .trigger:active { color: var(--foreground); }.trigger[data-state="active"] { color: var(--accent-strong); }
 .selection { position: absolute; z-index: -1; inset: 0; border: 1px solid var(--border); border-radius: inherit; background: var(--surface); box-shadow: var(--shadow-resting); will-change: transform; }

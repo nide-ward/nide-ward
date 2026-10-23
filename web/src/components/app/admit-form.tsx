@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Button from "@/components/arc/button/button";
 import { Input } from "@/components/arc/input/input";
 import { NumberField } from "@/components/arc/number-field/number-field";
@@ -11,12 +11,11 @@ import { normalizeNumericText } from "@/lib/numeric-input";
 import { fromCairoInputValue, toCairoInputValue } from "@/lib/time";
 import { AGE_ERROR, parseAgeInput } from "@/lib/display";
 import { EMPTY, FIELDS, slipToFields, type FieldKey } from "./abg-fields";
+import { RISK_FACTORS_MAX, RiskFactorChips } from "./risk-factor-chips";
 import { SlipScanner } from "./slip-scanner";
 import { regimenSummary } from "@/lib/insulin";
 import { useAction } from "./use-action";
 import { InlineError, Panel } from "./ui";
-
-const TAGS = ["Uncontrolled", "Missed Doses", "Common Cold", "Recent T1DM", "Dysuria", "SGLT2i"];
 
 /** The prototype's admit window had these four tabs; here they are steps, saved together at the end. */
 const STEPS = ["Admission and info", "First blood gas", "Insulin and drugs", "Workup and plan"];
@@ -51,7 +50,7 @@ function Steps({ step, onGo }: { step: number; onGo: (i: number) => void }) {
               onClick={() => onGo(i)}
               aria-current={i === step ? "step" : undefined}
               aria-label={`Step ${i + 1}: ${label}`}
-              className="flex h-6 w-full items-center"
+              className="-my-2.5 flex min-h-11 w-full cursor-pointer touch-manipulation items-center sm:my-0 sm:min-h-6"
             >
               <span className={`block h-1.5 w-full rounded-full ${i <= step ? "bg-accent" : "bg-surface-muted"}`} />
             </button>
@@ -70,14 +69,16 @@ export interface AdmitFormProps {
   onCancel: () => void;
   /** True once anything has been entered, so the caller can confirm before discarding. */
   onDirtyChange?: (dirty: boolean) => void;
-  /** In a dialog the action bar sticks to the bottom of the sheet. */
+  /** In a dialog the action bar is pinned to the bottom edge of the sheet and the form leaves room for it. */
   inDialog?: boolean;
+  children?: ReactNode;
 }
 
-export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange, inDialog = false }: AdmitFormProps) {
+export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange, inDialog = false, children }: AdmitFormProps) {
   const { run, pending, error } = useAction();
   const [localError, setLocalError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   // Step 1: admission and info
   const [name, setName] = useState("");
@@ -209,7 +210,7 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
 
   return (
     <form
-      className="grid gap-5"
+      className={inDialog ? "flex flex-1 min-h-0 flex-col" : "grid gap-5"}
       onSubmit={(e) => {
         e.preventDefault();
         if (step === 0 && !parseAgeInput(age).valid) {
@@ -220,11 +221,20 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
         if (last) save();
         else {
           setStep((s) => s + 1);
-          if (!inDialog) window.scrollTo({ top: 0 });
+          if (inDialog) bodyRef.current?.scrollTo({ top: 0 });
+          else window.scrollTo({ top: 0 });
         }
       }}
     >
-      <Steps step={step} onGo={setStep} />
+      <div ref={bodyRef} className={inDialog ? "flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:p-6 space-y-4" : "grid gap-5"}>
+        {children}
+        <Steps
+          step={step}
+          onGo={(i) => {
+            setStep(i);
+            if (inDialog) bodyRef.current?.scrollTo({ top: 0 });
+          }}
+        />
 
       {step === 0 && (
         <div className="grid gap-4">
@@ -233,25 +243,14 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
             <Input id="admit-name" label="Patient name" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} description="Optional. Leave blank to admit now and complete the chart later." />
             <Input label="Age (years)" type="text" inputMode="numeric" autoComplete="off" value={age} onChange={(e) => setAge(normalizeNumericText(e.target.value))} />
           </div>
-          <label className="grid gap-1.5">
+          <label className="grid min-w-0 gap-1.5">
             <span className="text-sm font-medium">Admission date and time (Cairo)</span>
             <input className="native-field" type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
           </label>
           <Input label="Primary diagnosis" value={dx} onChange={(e) => setDx(e.target.value)} maxLength={300} placeholder="Diabetic ketoacidosis (DKA)" />
           <div className="grid gap-2">
-            <Textarea label="Risk factors and comorbidities" value={risk} onChange={(e) => setRisk(e.target.value)} rows={2} maxLength={1000} />
-            <div className="flex flex-wrap gap-2">
-              {TAGS.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  className="min-h-11 rounded-full border border-border px-3 text-sm text-text-secondary hover:bg-surface-muted"
-                  onClick={() => setRisk((r) => (r.trim() === "" ? t : r.includes(t) ? r : `${r.trim()}, ${t}`))}
-                >
-                  Add {t}
-                </button>
-              ))}
-            </div>
+            <RiskFactorChips value={risk} onChange={setRisk} />
+            <Textarea label="Risk factors and comorbidities" value={risk} onChange={(e) => setRisk(e.target.value)} rows={2} maxLength={RISK_FACTORS_MAX} />
           </div>
         </div>
       )}
@@ -260,7 +259,7 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
         <Panel hue="sky" title="First blood gas">
         <div className="grid gap-4">
           <p className="text-sm text-text-secondary">Optional. Enter the intake blood gas now, or leave it empty and log it from the chart later. pH is required once any value is entered.</p>
-          <label className="grid gap-1.5">
+          <label className="grid min-w-0 gap-1.5">
             <span className="text-sm font-medium">Time drawn (Cairo)</span>
             <input className="native-field" type="datetime-local" value={abgAt ?? when} onChange={(e) => setAbgAt(e.target.value)} required={abgEntered} />
           </label>
@@ -324,17 +323,17 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
 
       {step === 2 && (
         <div className="grid gap-4">
-          <p className="tnum rounded-xl bg-surface-muted px-3 py-2 text-sm" aria-live="polite">
+          <p className="tnum break-words rounded-xl bg-surface-muted px-3 py-2 text-sm" aria-live="polite">
             {regimenSummary({ basalUnits: ins.basal, breakfastUnits: ins.b, lunchUnits: ins.l, dinnerUnits: ins.d })}
             {ins.q2h > 0 && ` | Actrapid Q2H: ${ins.q2h}U`}
           </p>
           <Panel hue="sky" title="Actrapid every 2 hours (Q2H)" description="Short-acting regular insulin administered every 2 hours.">
-            <div className="max-w-xs">
+            <div className="w-full sm:max-w-xs">
               <NumberField label="Actrapid every 2 hours" suffix=" U" min={0} max={500} step={2} value={ins.q2h} onValueChange={(x) => setIns((s) => ({ ...s, q2h: x }))} />
             </div>
           </Panel>
           <Panel hue="purple" title="Basal insulin" description="Lantus (glargine), given once a day at 11:00 PM.">
-            <div className="max-w-xs">
+            <div className="w-full sm:max-w-xs">
               <NumberField label="Basal Lantus at 11:00 PM" suffix=" U" min={0} max={500} step={2} value={ins.basal} onValueChange={(x) => setIns((s) => ({ ...s, basal: x }))} />
             </div>
           </Panel>
@@ -353,10 +352,10 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
                 {meds.map((m, i) => (
                   <li key={`${m.name}-${i}`} className="flex items-center justify-between gap-3 px-3 py-2.5">
                     <div className="min-w-0">
-                      <p className="font-medium">{m.name}</p>
-                      <p className="text-sm text-text-secondary">{[m.dose, m.frequency].filter(Boolean).join(", ") || "No dose recorded"}</p>
+                      <p className="break-words font-medium">{m.name}</p>
+                      <p className="break-words text-sm text-text-secondary">{[m.dose, m.frequency].filter(Boolean).join(", ") || "No dose recorded"}</p>
                     </div>
-                    <Button type="button" size="sm" variant="ghost" aria-label={`Remove ${m.name}`} onClick={() => setMeds((all) => all.filter((_, j) => j !== i))}>
+                    <Button type="button" size="sm" variant="ghost" className="shrink-0" aria-label={`Remove ${m.name}`} onClick={() => setMeds((all) => all.filter((_, j) => j !== i))}>
                       Remove
                     </Button>
                   </li>
@@ -406,9 +405,13 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
       )}
 
       <InlineError>{localError ?? error}</InlineError>
+      </div>
+
       <div
-        className={`flex flex-wrap gap-3 ${
-          inDialog ? "sticky bottom-0 z-10 -mx-6 mt-1 border-t border-border bg-surface-raised px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]" : ""
+        className={`flex flex-wrap gap-2 sm:gap-3 ${
+          inDialog
+            ? "flex-none border-t border-border bg-surface-raised pt-3 pb-[calc(0.75rem+var(--dialog-safe-bottom,env(safe-area-inset-bottom)))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6"
+            : ""
         }`}
       >
         {step > 0 ? (

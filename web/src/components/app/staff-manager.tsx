@@ -39,11 +39,12 @@ function CreateDialog() {
         <Button>Add staff member</Button>
       </DialogTrigger>
       <DialogContent
+        className="sheet-form-dialog"
         title="Add staff member"
         description="They sign in with this username and the temporary password you set, then must choose their own password. Share it in person."
       >
         <form
-          className="grid gap-4"
+          className="flex min-h-0 flex-1 flex-col"
           onSubmit={(e) => {
             e.preventDefault();
             void run(() => createStaff(f), () => {
@@ -53,27 +54,29 @@ function CreateDialog() {
             });
           }}
         >
-          <Input label="Full name" value={f.displayName} onChange={(e) => setF({ ...f, displayName: e.target.value })} required />
-          <Input
-            label="Username"
-            value={f.username}
-            onChange={(e) => setF({ ...f, username: e.target.value })}
-            required
-            minLength={USERNAME_MIN}
-            maxLength={USERNAME_MAX}
-            pattern="[A-Za-z0-9_.]+"
-            title={USERNAME_HINT}
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            autoComplete="off"
-            description={`${USERNAME_HINT} Cannot be changed later.`}
-          />
-          <Input label="Badge number (optional)" value={f.badgeNo} onChange={(e) => setF({ ...f, badgeNo: e.target.value })} />
-          <Select label="Role" options={ROLE_OPTIONS} value={f.role} onValueChange={(v) => setF({ ...f, role: v })} description={ROLE_INFO[f.role as ClinicalRole]?.desc} />
-          <PasswordField label="Temporary password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} required minLength={10} autoComplete="new-password" description="At least 10 characters. They replace it the first time they sign in." />
-          <InlineError>{error}</InlineError>
-          <div className="flex gap-3">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain grid content-start gap-4 p-4 sm:p-6">
+            <Input label="Full name" value={f.displayName} onChange={(e) => setF({ ...f, displayName: e.target.value })} required />
+            <Input
+              label="Username"
+              value={f.username}
+              onChange={(e) => setF({ ...f, username: e.target.value })}
+              required
+              minLength={USERNAME_MIN}
+              maxLength={USERNAME_MAX}
+              pattern="[A-Za-z0-9_.]+"
+              title={USERNAME_HINT}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              autoComplete="off"
+              description={`${USERNAME_HINT} Cannot be changed later.`}
+            />
+            <Input label="Badge number (optional)" value={f.badgeNo} onChange={(e) => setF({ ...f, badgeNo: e.target.value })} />
+            <Select label="Role" options={ROLE_OPTIONS} value={f.role} onValueChange={(v) => setF({ ...f, role: v })} description={ROLE_INFO[f.role as ClinicalRole]?.desc} />
+            <PasswordField label="Temporary password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} required minLength={10} autoComplete="new-password" description="At least 10 characters. They replace it the first time they sign in." />
+            <InlineError>{error}</InlineError>
+          </div>
+          <div className="flex-none flex flex-wrap gap-3 border-t border-border bg-surface-raised pt-3 pb-[calc(0.75rem+var(--dialog-safe-bottom,env(safe-area-inset-bottom)))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pb-4">
             <Button type="submit" loading={pending}>
               Create account
             </Button>
@@ -98,7 +101,7 @@ function EditDialog({ row, isSelf }: { row: StaffRow; isSelf: boolean }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="secondary" aria-label={`Edit ${row.displayName}`}>
+        <Button size="sm" variant="secondary" className="shrink-0" aria-label={`Edit ${row.displayName}`}>
           Edit
         </Button>
       </DialogTrigger>

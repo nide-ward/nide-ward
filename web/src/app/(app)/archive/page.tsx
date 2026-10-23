@@ -1,6 +1,7 @@
 import { ArchiveView, type ArchiveRow } from "@/components/app/archive-view";
 import { patientLabel } from "@/lib/display";
 import { regimenSummary } from "@/lib/insulin";
+import { uploadMode } from "@/lib/env";
 import { can } from "@/lib/permissions";
 import { requireStaff } from "@/lib/session";
 import { formatCairo } from "@/lib/time";
@@ -43,6 +44,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
         q={q}
         canDelete={can(staff.role, "archive.delete")}
         role={staff.role}
+        uploadMode={uploadMode()}
       />
     </div>
   );

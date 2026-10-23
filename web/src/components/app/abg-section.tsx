@@ -171,7 +171,7 @@ function EntryForm() {
       }}
     >
       <div className="grid gap-2">
-        <label className="grid gap-1.5">
+        <label className="grid min-w-0 gap-1.5">
           <span className="text-sm font-medium">Time drawn (Cairo)</span>
           <input className="native-field" type="datetime-local" value={takenAt} onChange={(e) => setTakenAt(e.target.value)} required />
         </label>
@@ -287,7 +287,7 @@ function ReadingsTable({ rows }: { rows: AbgRowData[] }) {
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm text-text-secondary">{when}</span>
+                <span className="min-w-0 truncate text-sm text-text-secondary">{when}</span>
                 {canDelete && (
                   <Button size="sm" variant="ghost" disabled={pending} aria-label={`Delete reading from ${when}`} onClick={() => onDelete(r)}>
                     Delete
@@ -308,7 +308,7 @@ function ReadingsTable({ rows }: { rows: AbgRowData[] }) {
                   <dd className={`text-lg font-medium ${a?.isHighAG ? "text-hue-amber-ink" : ""}`}>{a && a.ag !== null ? a.ag : "--"}{a?.isHighAG && <Flag word="high" />}</dd>
                 </div>
               </dl>
-              <dl className="mt-2 grid grid-cols-4 gap-x-2 gap-y-1 text-sm">
+              <dl className="mt-2 grid grid-cols-3 min-[420px]:grid-cols-4 gap-x-2 gap-y-1.5 text-sm">
                 {rest.map(([k, v]) => (
                   <div key={k}>
                     <dt className="text-xs text-text-secondary">{k}</dt>
@@ -395,7 +395,7 @@ function BedsideLabsCard({ initialAcetone = "Negative", currentRbg = null }: { i
       title="Bedside Blood Glucose & Urine Acetone"
       description="Point-of-care fingerstick RBG and serial bedside urine ketone evaluation."
       action={
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {rbg && <Pill hue="rose">RBG: {rbg} mg/dL</Pill>}
           <Pill hue={ACETONE_HUE[acetone]}>Acetone: {acetone}</Pill>
         </div>

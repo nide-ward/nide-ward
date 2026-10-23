@@ -41,6 +41,7 @@ export interface ChartViewProps {
   insulin: InsulinData;
   meds: MedRow[];
   media: MediaRow[];
+  onDischarged?: () => void;
 }
 
 function StaleBanner() {
@@ -110,14 +111,14 @@ function Inner(p: ChartViewProps & { epoch: number }) {
       <StaleBanner />
       <header className={`flex flex-wrap items-start justify-between gap-3 rounded-2xl border p-4 ${HUE[wardHue(p.wardId)].panel}`}>
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Pill hue={wardHue(p.wardId)}>{p.wardTitle} • {p.bedName}</Pill>
             {p.discharged && <Pill>Discharged</Pill>}
           </div>
           <h1 className="mt-1.5 break-words text-lg sm:text-xl font-bold tracking-tight text-foreground">
             {patientLabel(p.overview.patientName, p.bedName)}
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-text-secondary">
+          <p className="mt-0.5 break-words text-xs sm:text-sm text-text-secondary">
             {ageText(p.overview.age) && `${ageText(p.overview.age)}. `}
             {isBlank(p.overview.diagnosis) ? <span className="text-text-muted">{NO_DIAGNOSIS}</span> : p.overview.diagnosis}
           </p>
@@ -126,10 +127,10 @@ function Inner(p: ChartViewProps & { epoch: number }) {
           <Link
             href={`/print/patient/${p.admissionId}`}
             target="_blank"
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-border-strong px-3 py-1.5 text-xs font-semibold hover:bg-surface-muted transition"
+            className="inline-flex min-h-11 touch-manipulation items-center gap-1.5 rounded-xl border border-border-strong px-3 py-1.5 text-xs font-semibold hover:bg-surface-muted transition sm:min-h-9"
             title="Open printable handover report (save as PDF)"
           >
-            <FileText size={14} aria-hidden="true" />
+            <FileText size={14} aria-hidden="true" className="shrink-0" />
             <span>Print PDF / Handover</span>
           </Link>
           {!p.discharged && (
@@ -190,6 +191,7 @@ export function ChartView(props: ChartViewProps) {
       role={props.role}
       readOnly={!!props.discharged}
       uploadMode={props.uploadMode}
+      onDischarged={props.onDischarged}
     >
       {({ epoch }) => <Inner {...props} epoch={epoch} />}
     </ChartProvider>

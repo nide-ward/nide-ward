@@ -2,7 +2,8 @@
 
 import { and, eq } from "drizzle-orm";
 import { schema } from "@/db";
-import { deleteObject, headObject, MAX_UPLOAD_BYTES } from "@/lib/storage";
+import { MAX_UPLOAD_BYTES } from "@/app/api/uploads/image-rules";
+import { deleteObject, headObject } from "@/lib/storage";
 import { deleteMediaSchema, registerMediaSchema } from "@/lib/validation";
 import { ActionError, audit, requireActiveAdmission, runAction, type ActionResult } from "../action";
 

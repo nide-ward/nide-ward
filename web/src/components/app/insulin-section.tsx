@@ -27,7 +27,7 @@ export function InsulinSection({ data }: { data: InsulinData }) {
 
   return (
     <Panel title="Insulin regimen" description={`${data.basalLabel}. Last changed by ${data.updatedBy}.`}>
-      <p className="tnum mb-4 rounded-xl bg-surface-muted px-3 py-2 text-sm" aria-live="polite">
+      <p className="tnum mb-4 break-words rounded-xl bg-surface-muted px-3 py-2 text-sm" aria-live="polite">
         {regimenSummary({ basalUnits: v.basal, breakfastUnits: v.b, lunchUnits: v.l, dinnerUnits: v.d })}
         {v.q2h > 0 && ` | Actrapid Q2H: ${v.q2h}U`}
       </p>
@@ -60,12 +60,12 @@ export function InsulinSection({ data }: { data: InsulinData }) {
         }}
       >
         <Panel hue="sky" title="Actrapid every 2 hours (Q2H)" description="Short-acting regular insulin administered every 2 hours.">
-          <div className="max-w-xs">
+          <div className="w-full sm:max-w-xs">
             <NumberField label="Actrapid every 2 hours" suffix=" U" min={0} max={500} step={2} value={v.q2h} onValueChange={(x) => setV((s) => ({ ...s, q2h: x }))} disabled={!editable} />
           </div>
         </Panel>
         <Panel hue="purple" title="Basal insulin" description="Lantus (glargine), once a day at 11:00 PM.">
-          <div className="max-w-xs">
+          <div className="w-full sm:max-w-xs">
             <NumberField label="Basal Lantus at 11:00 PM" suffix=" U" min={0} max={500} step={2} value={v.basal} onValueChange={(x) => setV((s) => ({ ...s, basal: x }))} disabled={!editable} />
           </div>
         </Panel>

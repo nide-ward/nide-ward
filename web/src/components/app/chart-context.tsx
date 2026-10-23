@@ -17,6 +17,7 @@ interface ChartCtx {
   readOnly: boolean;
   allowed: (p: Permission) => boolean;
   uploadMode: "presigned" | "proxy";
+  onDischarged?: () => void;
 }
 
 const Ctx = createContext<ChartCtx | null>(null);
@@ -37,6 +38,7 @@ export function ChartProvider({
   role,
   readOnly,
   uploadMode,
+  onDischarged,
   children,
 }: {
   admissionId: string;
@@ -44,6 +46,7 @@ export function ChartProvider({
   role: ClinicalRole;
   readOnly: boolean;
   uploadMode: "presigned" | "proxy";
+  onDischarged?: () => void;
   children: (api: { epoch: number }) => ReactNode;
 }) {
   const [loaded, setLoaded] = useState(serverVersion);
@@ -62,6 +65,7 @@ export function ChartProvider({
     readOnly,
     allowed: (p) => !readOnly && can(role, p),
     uploadMode,
+    onDischarged,
   };
   return <Ctx.Provider value={value}>{children({ epoch })}</Ctx.Provider>;
 }

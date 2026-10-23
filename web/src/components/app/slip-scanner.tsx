@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, ImageIcon, LoaderCircle } from "lucide-react";
 import Button from "@/components/arc/button/button";
 import { Input } from "@/components/arc/input/input";
-import { parseABGSlipText } from "@/lib/clinical";
+import { parseABGSlipTexts } from "@/lib/clinical";
 import { normalizeNumericText } from "@/lib/numeric-input";
 import { OcrError, preloadOcr, prepareImage, readSlipText, type OcrProgress } from "@/lib/ocr/slip-ocr";
 import { EMPTY, FIELDS, slipToFields, type FieldKey } from "./abg-fields";
@@ -65,12 +65,12 @@ export function SlipScanner({ onApply, onFallback, onText, children }: Props) {
     setProgress({ label: "Preparing the photo", fraction: null });
     try {
       const canvas = await prepareImage(file);
-      const text = await readSlipText(canvas, (p) => {
+      const texts = await readSlipText(canvas, (p) => {
         if (run.current === id) setProgress(p);
       });
       if (run.current !== id) return;
-      onText?.(text);
-      const found = slipToFields(parseABGSlipText(text));
+      onText?.(texts[0]);
+      const found = slipToFields(parseABGSlipTexts(texts));
       const count = Object.keys(found).length;
       if (count === 0) {
         setPhase("idle");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Cloud, CloudOff, RefreshCw, CheckCircle2, AlertTriangle, Wifi, WifiOff } from "lucide-react";
+import { RefreshCw, CheckCircle2, AlertTriangle, Wifi, WifiOff } from "lucide-react";
 import Button from "@/components/arc/button/button";
 import {
   clearOfflineQueue,
@@ -53,6 +53,12 @@ export function SyncStatusPill() {
   const isOffline = state.status === "offline";
   const isSyncing = state.status === "connecting" || state.isFlushing || isManualSyncing;
 
+  const statusLabel = isOffline
+    ? "Offline — hospital network and sync status"
+    : isSyncing
+    ? "Syncing — hospital network and sync status"
+    : "Online — hospital network and sync status";
+
   return (
     <>
       <button
@@ -61,49 +67,48 @@ export function SyncStatusPill() {
           setQueue(getOfflineQueue());
           setOpenModal(true);
         }}
-        className={`group flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition cursor-pointer touch-manipulation border ${
+        className={`group inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border px-2.5 text-xs font-medium whitespace-nowrap transition cursor-pointer touch-manipulation sm:h-8 sm:min-w-0 sm:rounded-lg ${
           isOffline
             ? "bg-rose-950/80 border-rose-800 text-rose-200 hover:bg-rose-900"
             : isSyncing
             ? "bg-amber-950/80 border-amber-800 text-amber-200 hover:bg-amber-900"
-            : "bg-surface-elevated/70 border-topbar-ink/20 text-topbar-ink hover:text-topbar-strong"
+            : "bg-topbar-control border-topbar-border text-topbar-ink hover:text-topbar-strong"
         }`}
         title="Hospital network and offline sync status"
-        aria-label="Network and offline sync status"
+        aria-label={statusLabel}
       >
         {isOffline ? (
           <>
-            <span className="size-2 rounded-full bg-rose-500 animate-pulse" />
+            <WifiOff size={16} aria-hidden="true" className="shrink-0 text-rose-400 sm:hidden" />
+            <span aria-hidden="true" className="hidden size-2 shrink-0 rounded-full bg-rose-500 animate-pulse sm:inline-block" />
             <span className="hidden sm:inline font-semibold">Offline</span>
-            <span className="sm:hidden font-semibold">Offline</span>
             {state.pendingCount > 0 && (
-              <span className="rounded bg-rose-600/70 px-1.5 py-0.2 text-[10px] font-bold text-white">
+              <span className="tnum rounded bg-rose-600/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
                 {state.pendingCount}
               </span>
             )}
           </>
         ) : isSyncing ? (
           <>
-            <RefreshCw size={12} className="animate-spin text-amber-400" />
+            <RefreshCw size={15} aria-hidden="true" className="shrink-0 animate-spin text-amber-400 sm:size-3" />
             <span className="hidden sm:inline font-semibold">Syncing...</span>
-            <span className="sm:hidden font-semibold">Syncing</span>
             {state.pendingCount > 0 && (
-              <span className="rounded bg-amber-600/70 px-1.5 py-0.2 text-[10px] font-bold text-white">
+              <span className="tnum rounded bg-amber-600/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
                 {state.pendingCount}
               </span>
             )}
           </>
         ) : (
           <>
-            <span className="size-2 rounded-full bg-emerald-400" />
+            <span aria-hidden="true" className="size-2.5 shrink-0 rounded-full bg-emerald-400 sm:size-2" />
             <span className="hidden md:inline">Online</span>
             {state.lastSaved && (
-              <span className="hidden lg:inline text-[11px] opacity-75">
+              <span className="tnum hidden lg:inline text-[11px] opacity-75">
                 • {formatCairoTime(state.lastSaved)}
               </span>
             )}
             {state.pendingCount > 0 && (
-              <span className="rounded bg-amber-500/80 px-1.5 py-0.2 text-[10px] font-bold text-slate-950">
+              <span className="tnum rounded bg-amber-500/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-950">
                 {state.pendingCount}
               </span>
             )}
@@ -114,28 +119,29 @@ export function SyncStatusPill() {
       {/* Sync Status Details Modal */}
       {openModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-3 sm:p-4 text-text-primary"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 text-foreground"
           onClick={() => setOpenModal(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl bg-surface border border-border p-5 shadow-xl space-y-4 text-xs"
+            className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl bg-surface border border-border p-4 sm:p-5 shadow-xl space-y-4 text-xs"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
+              <div className="flex min-w-0 items-center gap-2">
                 {isOffline ? (
-                  <WifiOff size={18} className="text-rose-500" />
+                  <WifiOff size={18} className="shrink-0 text-rose-500" />
                 ) : (
-                  <Wifi size={18} className="text-emerald-500" />
+                  <Wifi size={18} className="shrink-0 text-emerald-500" />
                 )}
-                <h3 className="font-bold text-sm text-text-strong">
+                <h3 className="truncate font-bold text-sm text-foreground">
                   Hospital Network & Offline Sync
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setOpenModal(false)}
-                className="text-text-secondary hover:text-text-strong font-bold px-2 py-1 rounded"
+                aria-label="Close sync status"
+                className="inline-flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-lg text-text-secondary hover:bg-surface-muted hover:text-foreground font-bold sm:size-8"
               >
                 ✕
               </button>
@@ -146,22 +152,22 @@ export function SyncStatusPill() {
               <div
                 className={`p-3 rounded-xl border flex items-start gap-2.5 ${
                   isOffline
-                    ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
-                    : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    ? "bg-hue-rose-soft border-hue-rose-line text-hue-rose-ink"
+                    : "bg-hue-emerald-soft border-hue-emerald-line text-hue-emerald-ink"
                 }`}
               >
                 {isOffline ? (
-                  <AlertTriangle size={16} className="shrink-0 mt-0.5 text-rose-400" />
+                  <AlertTriangle size={16} className="shrink-0 mt-0.5 text-hue-rose" />
                 ) : (
-                  <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-400" />
+                  <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-hue-emerald" />
                 )}
-                <div className="space-y-0.5">
+                <div className="min-w-0 space-y-0.5">
                   <p className="font-bold text-xs">
                     {isOffline
                       ? "Offline (Weak / No Reception)"
                       : "Connected to NIDE Hospital Server"}
                   </p>
-                  <p className="text-[11px] opacity-80">
+                  <p className="text-[11px] opacity-85">
                     {isOffline
                       ? "Bad signal detected on the ward. All edits, admits, and plan updates are saved locally to this device and will automatically upload once signal returns."
                       : "Real-time synchronization active. All patient updates are in sync."}
@@ -170,15 +176,15 @@ export function SyncStatusPill() {
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div className="p-2.5 rounded-lg bg-surface-muted border border-border">
+                <div className="min-w-0 p-2.5 rounded-lg bg-surface-muted border border-border">
                   <span className="text-text-secondary block">Last Saved Locally:</span>
-                  <b className="text-text-strong font-mono">{formatCairoTime(state.lastSaved)}</b>
+                  <b className="tnum text-foreground font-mono">{formatCairoTime(state.lastSaved)}</b>
                 </div>
-                <div className="p-2.5 rounded-lg bg-surface-muted border border-border">
+                <div className="min-w-0 p-2.5 rounded-lg bg-surface-muted border border-border">
                   <span className="text-text-secondary block">Pending Queue:</span>
                   <b
-                    className={`font-mono ${
-                      state.pendingCount > 0 ? "text-amber-500 font-bold" : "text-text-strong"
+                    className={`tnum font-mono ${
+                      state.pendingCount > 0 ? "text-amber-500 font-bold" : "text-foreground"
                     }`}
                   >
                     {state.pendingCount} update{state.pendingCount === 1 ? "" : "s"}
@@ -204,14 +210,14 @@ export function SyncStatusPill() {
                       className="p-2 rounded-lg bg-surface-muted border border-border flex items-center justify-between text-[11px]"
                     >
                       <div className="min-w-0 pr-2">
-                        <span className="font-semibold block truncate text-text-strong">
+                        <span className="font-semibold block truncate text-foreground">
                           {item.description}
                         </span>
-                        <span className="text-[10px] text-text-secondary">
+                        <span className="tnum text-[10px] text-text-secondary">
                           {formatCairoTime(item.timestamp)}
                         </span>
                       </div>
-                      <span className="shrink-0 text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-medium">
+                      <span className="shrink-0 text-[10px] bg-hue-amber-soft text-hue-amber-ink border border-hue-amber-line px-1.5 py-0.5 rounded font-medium">
                         Queued
                       </span>
                     </div>
@@ -221,7 +227,7 @@ export function SyncStatusPill() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-border">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
               {queue.length > 0 ? (
                 <button
                   type="button"
@@ -229,7 +235,7 @@ export function SyncStatusPill() {
                     clearOfflineQueue();
                     setQueue([]);
                   }}
-                  className="text-[11px] text-rose-400 hover:text-rose-300 underline"
+                  className="inline-flex min-h-11 touch-manipulation items-center px-2 text-xs text-hue-rose-ink hover:underline sm:min-h-8 sm:text-[11px]"
                 >
                   Clear queue
                 </button>

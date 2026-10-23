@@ -2,7 +2,7 @@
  * Class maps for the prototype's colour roles. Tailwind only emits classes it can see as whole strings,
  * so every combination is spelled out here. The colours behind them are tokens in globals.css.
  */
-export type Hue = "rose" | "blue" | "indigo" | "amber" | "sky" | "purple" | "cyan" | "teal" | "emerald";
+export type Hue = "rose" | "pink" | "blue" | "indigo" | "amber" | "sky" | "purple" | "cyan" | "teal" | "emerald";
 
 interface HueClasses {
   /** Tinted panel with its border. */
@@ -27,6 +27,7 @@ interface HueClasses {
 
 export const HUE: Record<Hue, HueClasses> = {
   rose: { band: "bg-hue-rose-soft", edge: "border-l-4 border-l-hue-rose", hover: "hover:border-hue-rose", panel: "border-hue-rose-line bg-hue-rose-soft", ink: "text-hue-rose-ink", dot: "bg-hue-rose", pill: "border-hue-rose-line bg-hue-rose-soft text-hue-rose-ink", solid: "border-hue-rose bg-hue-rose text-hue-on", card: "border-border border-t-4 border-t-hue-rose bg-surface hover:border-hue-rose" },
+  pink: { band: "bg-hue-pink-soft", edge: "border-l-4 border-l-hue-pink", hover: "hover:border-hue-pink", panel: "border-hue-pink-line bg-hue-pink-soft", ink: "text-hue-pink-ink", dot: "bg-hue-pink", pill: "border-hue-pink-line bg-hue-pink-soft text-hue-pink-ink", solid: "border-hue-pink bg-hue-pink text-hue-on", card: "border-border border-t-4 border-t-hue-pink bg-surface hover:border-hue-pink" },
   blue: { band: "bg-hue-blue-soft", edge: "border-l-4 border-l-hue-blue", hover: "hover:border-hue-blue", panel: "border-hue-blue-line bg-hue-blue-soft", ink: "text-hue-blue-ink", dot: "bg-hue-blue", pill: "border-hue-blue-line bg-hue-blue-soft text-hue-blue-ink", solid: "border-hue-blue bg-hue-blue text-hue-on", card: "border-border border-t-4 border-t-hue-blue bg-surface hover:border-hue-blue" },
   indigo: { band: "bg-hue-indigo-soft", edge: "border-l-4 border-l-hue-indigo", hover: "hover:border-hue-indigo", panel: "border-hue-indigo-line bg-hue-indigo-soft", ink: "text-hue-indigo-ink", dot: "bg-hue-indigo", pill: "border-hue-indigo-line bg-hue-indigo-soft text-hue-indigo-ink", solid: "border-hue-indigo bg-hue-indigo text-hue-on", card: "border-border border-t-4 border-t-hue-indigo bg-surface hover:border-hue-indigo" },
   amber: { band: "bg-hue-amber-soft", edge: "border-l-4 border-l-hue-amber", hover: "hover:border-hue-amber", panel: "border-hue-amber-line bg-hue-amber-soft", ink: "text-hue-amber-ink", dot: "bg-hue-amber", pill: "border-hue-amber-line bg-hue-amber-soft text-hue-amber-ink", solid: "border-hue-amber bg-hue-amber text-hue-on", card: "border-border border-t-4 border-t-hue-amber bg-surface hover:border-hue-amber" },
@@ -38,7 +39,7 @@ export const HUE: Record<Hue, HueClasses> = {
 };
 
 /** Ward colours from the prototype's WARD_STRUCTURE themes. */
-export const WARD_HUE: Record<string, Hue> = { female: "rose", male: "blue", paid: "indigo", overflow: "amber" };
+export const WARD_HUE: Record<string, Hue> = { female: "pink", male: "blue", paid: "indigo", overflow: "amber" };
 export const wardHue = (wardId: string): Hue => WARD_HUE[wardId] ?? "teal";
 
 /**

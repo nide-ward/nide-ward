@@ -64,7 +64,17 @@ export function AdmitDialog({ target, onClose }: { target: AdmitTarget | null; o
             }
           }}
         >
-          <div className="grid gap-4">
+          <AdmitForm
+            bedId={target.bedId}
+            initialTime={target.openedAt}
+            inDialog
+            onDirtyChange={setDirty}
+            onCancel={requestClose}
+            onDone={() => {
+              toast(`Patient admitted to ${target.bedName}`);
+              finish();
+            }}
+          >
             <div className={`flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 text-sm ${hue.panel}`}>
               <span aria-hidden="true" className={`size-2.5 rounded-full ${hue.dot}`} />
               <span className={`font-medium ${hue.ink}`}>{target.wardTitle}</span>
@@ -86,19 +96,7 @@ export function AdmitDialog({ target, onClose }: { target: AdmitTarget | null; o
                 </div>
               </div>
             )}
-
-            <AdmitForm
-              bedId={target.bedId}
-              initialTime={target.openedAt}
-              inDialog
-              onDirtyChange={setDirty}
-              onCancel={requestClose}
-              onDone={() => {
-                toast(`Patient admitted to ${target.bedName}`);
-                finish();
-              }}
-            />
-          </div>
+          </AdmitForm>
         </DialogContent>
       )}
     </Dialog>

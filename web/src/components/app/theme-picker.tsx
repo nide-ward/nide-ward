@@ -46,7 +46,7 @@ export function ThemePicker({ initial, className = "" }: { initial: Theme; class
   }
 
   return (
-    <div role="radiogroup" aria-label="Colour theme" className={`inline-flex rounded-xl border border-topbar-border bg-topbar-control p-0.5 ${className}`}>
+    <div role="radiogroup" aria-label="Colour theme" className={`inline-flex shrink-0 rounded-xl border border-topbar-border bg-topbar-control p-0 sm:p-0.5 ${className}`}>
       {OPTIONS.map(({ value: v, label, icon: Icon }) => {
         const on = value === v;
         return (
@@ -58,7 +58,7 @@ export function ThemePicker({ initial, className = "" }: { initial: Theme; class
             aria-label={label}
             title={label}
             onClick={() => choose(v)}
-            className={`inline-flex size-10 items-center justify-center rounded-[10px] sm:size-8 ${
+            className={`inline-flex size-11 touch-manipulation items-center justify-center rounded-[10px] sm:size-8 ${
               on ? "bg-topbar-accent text-topbar" : "text-topbar-ink hover:text-topbar-strong"
             }`}
           >

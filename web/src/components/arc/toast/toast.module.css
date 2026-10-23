@@ -80,6 +80,14 @@
     color var(--duration-fast) var(--ease-standard);
 }
 
+@media (pointer: coarse), (any-pointer: coarse), (max-width: 639px) {
+  .close {
+    width: var(--control-height-md);
+    height: var(--control-height-md);
+    margin: -0.4375rem -0.5rem -0.4375rem 0;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .close:hover {
     background: var(--surface-muted);

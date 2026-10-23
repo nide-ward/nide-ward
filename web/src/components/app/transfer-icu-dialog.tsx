@@ -34,10 +34,11 @@ export function TransferToIcuDialog({ patientName, bedName }: { patientName: str
         </Button>
       </DialogTrigger>
       <DialogContent
+        className="sheet-form-dialog"
         title="Transfer Patient to ICU"
         description={`${who}${patientName.trim() ? `, ${bedName}` : ""}. Transfer patient due to clinical deterioration. The admission record moves to the archive under ICU transfer and the bed becomes available.`}
       >
-        <div className="grid gap-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain grid content-start gap-4 p-4 sm:p-6">
           <div className="rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs text-text-secondary">
             <b>Deterioration Transfer:</b> Patient will be archived with disposition <b>&ldquo;Transferred to ICU / Critical Care&rdquo;</b>.
           </div>
@@ -56,6 +57,8 @@ export function TransferToIcuDialog({ patientName, bedName }: { patientName: str
               Reload chart
             </Button>
           )}
+        </div>
+        <div className="flex-none grid gap-2 border-t border-border bg-surface-raised pt-3 pb-[calc(0.75rem+var(--dialog-safe-bottom,env(safe-area-inset-bottom)))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pb-4">
           <HoldToConfirm
             tone="danger"
             label="Hold to confirm ICU transfer"
@@ -71,7 +74,11 @@ export function TransferToIcuDialog({ patientName, bedName }: { patientName: str
                 () => dischargePatient(transferPayload),
                 () => {
                   toast(`Transferred ${who} to ICU`, "Recorded in archive");
-                  router.push("/");
+                  if (chart.onDischarged) {
+                    chart.onDischarged();
+                  } else {
+                    router.push("/");
+                  }
                 },
                 {
                   type: "dischargePatient",

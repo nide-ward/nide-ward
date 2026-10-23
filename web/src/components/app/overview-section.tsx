@@ -4,36 +4,16 @@ import { useState } from "react";
 import Button from "@/components/arc/button/button";
 import { Input } from "@/components/arc/input/input";
 import { Textarea } from "@/components/arc/textarea/textarea";
-import { Select } from "@/components/arc/select/select";
-import { recordBedside, updateChart } from "@/server/actions/patients";
+import { updateChart } from "@/server/actions/patients";
 import { fromCairoInputValue, toCairoInputValue } from "@/lib/time";
-import { parseMeasurement } from "@/lib/clinical";
 import { AGE_ERROR, NO_DIAGNOSIS, ageText, isBlank, parseAgeInput, patientLabel } from "@/lib/display";
 import { normalizeNumericText } from "@/lib/numeric-input";
 import { URINE_ACETONE } from "@/lib/validation";
 import { useChart } from "./chart-context";
 import { useAction } from "./use-action";
-import { ACETONE_HUE, type Hue } from "@/lib/hues";
-import { Definition, InlineError, Panel, Pill } from "./ui";
-import { useToast } from "./toast-provider";
-
-const RISK_TAGS = [
-  "Uncontrolled",
-  "Missed Doses",
-  "Common Cold",
-  "Recent T1DM",
-  "Dysuria",
-  "SGLT2i",
-];
-
-const ACETONE_OPTIONS = [
-  { value: "Negative", label: "Negative (nil)" },
-  { value: "Trace", label: "Trace (+/-)" },
-  { value: "+", label: "+ (small)" },
-  { value: "++", label: "++ (moderate)" },
-  { value: "+++", label: "+++ (large)" },
-  { value: "++++", label: "++++ (very large)" },
-];
+import { type Hue } from "@/lib/hues";
+import { Definition, InlineError, Panel } from "./ui";
+import { RISK_FACTORS_MAX, RiskFactorChips } from "./risk-factor-chips";
 
 export interface OverviewData {
   patientName: string;
@@ -56,13 +36,8 @@ function ChartForm({ data }: { data: OverviewData }) {
   const [admittedAt, setAdmittedAt] = useState(toCairoInputValue(data.admittedAt));
   const [diagnosis, setDiagnosis] = useState(data.diagnosis);
   const [risk, setRisk] = useState(data.riskFactors);
-  const [labs, setLabs] = useState(data.labsImaging);
-  const [consults, setConsults] = useState(data.consultations);
-  const [plan, setPlan] = useState(data.followupPlan);
   const [saved, setSaved] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-
-  const addTag = (tag: string) => setRisk((r) => (r.trim() === "" ? tag : r.includes(tag) ? r : `${r.trim()}, ${tag}`));
 
   return (
     <form
@@ -85,9 +60,9 @@ function ChartForm({ data }: { data: OverviewData }) {
           admittedAt: when ? when.toISOString() : undefined,
           diagnosis,
           riskFactors: risk,
-          labsImaging: labs,
-          consultations: consults,
-          followupPlan: plan,
+          labsImaging: data.labsImaging,
+          consultations: data.consultations,
+          followupPlan: data.followupPlan,
         };
         void run(
           () => updateChart(chartPayload),
@@ -108,25 +83,14 @@ function ChartForm({ data }: { data: OverviewData }) {
         <Input label="Patient name" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
         <Input label="Age (years)" type="text" inputMode="numeric" autoComplete="off" value={age} onChange={(e) => setAge(normalizeNumericText(e.target.value))} />
       </div>
-      <label className="grid gap-1.5">
+      <label className="grid min-w-0 gap-1.5">
         <span className="text-sm font-medium">Admission date and time (Cairo)</span>
         <input className="native-field" type="datetime-local" value={admittedAt} onChange={(e) => setAdmittedAt(e.target.value)} />
       </label>
       <Input label="Primary diagnosis" value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} maxLength={300} />
       <div className="grid gap-2">
-        <Textarea label="Risk factors and comorbidities" value={risk} onChange={(e) => setRisk(e.target.value)} rows={2} maxLength={1000} />
-        <div className="flex flex-wrap gap-2" aria-label="Add a common risk factor">
-          {RISK_TAGS.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => addTag(t)}
-              className="min-h-11 rounded-full border border-border px-3 text-sm text-text-secondary hover:bg-surface-muted"
-            >
-              Add {t}
-            </button>
-          ))}
-        </div>
+        <RiskFactorChips value={risk} onChange={setRisk} />
+        <Textarea label="Risk factors and comorbidities" value={risk} onChange={(e) => setRisk(e.target.value)} rows={2} maxLength={RISK_FACTORS_MAX} />
       </div>
       <InlineError>{localError ?? error}</InlineError>
       {conflict && <p className="text-sm text-text-secondary">Use the banner above to load the latest chart, then repeat your edit.</p>}

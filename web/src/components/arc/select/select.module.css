@@ -1,4 +1,4 @@
-.field { display: grid; gap: var(--space-2); min-width: 0; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); min-width: 0; }
 .field label { font-size: var(--text-sm); font-weight: 500; }
 /* The trigger anchors the floating menu. Radix opens on pointerdown and measures this box, so it never scales: press feedback is color only. */
 .trigger { position: relative; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; min-height: var(--control-height-md); border: 1px solid var(--border); border-radius: var(--radius-control); padding: 0 var(--space-3); background: var(--surface); color: var(--foreground); font: inherit; font-size: var(--text-sm); text-align: left; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
@@ -20,7 +20,8 @@
 .content[data-side="right"] { --menu-x: -6px; --menu-y: 0px; }
 .content[data-state="closed"] { animation: select-out var(--duration-instant) var(--ease-standard) both; }
 .viewport { padding: 2px 0; }
-.item { position: relative; display: flex; align-items: center; min-height: 36px; border-radius: calc(var(--radius-control) - 4px); padding: 0 34px 0 11px; color: var(--foreground); font-size: var(--text-sm); cursor: default; outline: none; user-select: none; transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard); }
+.item { position: relative; display: flex; align-items: center; min-height: 36px; border-radius: calc(var(--radius-control) - 4px); padding: 6px 34px 6px 11px; color: var(--foreground); font-size: var(--text-sm); cursor: default; outline: none; user-select: none; transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard); }
+@media (pointer: coarse), (any-pointer: coarse), (max-width: 639px) { .trigger, .item { font-size: max(16px, 1rem); } .item { min-height: var(--control-height-md); } }
 .item[data-highlighted] { background: var(--surface-muted); }
 .item[data-disabled] { opacity: .45; }
 .indicator { position: absolute; right: 10px; display: inline-flex; align-items: center; color: var(--foreground); animation: indicator-in var(--duration-standard) var(--ease-enter) 40ms both; }

@@ -64,6 +64,7 @@ export function ArchiveView({
   q,
   canDelete,
   role = "resident",
+  uploadMode,
 }: {
   rows: ArchiveRow[];
   total: number;
@@ -72,6 +73,7 @@ export function ArchiveView({
   q: string;
   canDelete: boolean;
   role?: ClinicalRole;
+  uploadMode: "presigned" | "proxy";
 }) {
   const router = useRouter();
   const [term, setTerm] = useState(q);
@@ -148,8 +150,8 @@ export function ArchiveView({
   const href = (p: number) => `/archive?${new URLSearchParams({ ...(q ? { q } : {}), page: String(p) }).toString()}`;
 
   return (
-    <div className="grid gap-4">
-      <div className="max-w-md">
+    <div className="grid min-w-0 gap-4">
+      <div className="w-full min-w-0 max-w-md">
         <SearchField label="Search name, diagnosis, bed or discharge date" value={term} onValueChange={setTerm} />
       </div>
       {rows.length === 0 ? (
@@ -162,33 +164,42 @@ export function ArchiveView({
       ) : (
         <>
           {/* Phone: one card per discharge, newest first (the order the server returns). */}
-          <ul className="grid gap-2 sm:hidden" aria-label="Discharged patients, newest first">
+          <ul className="grid min-w-0 gap-2 sm:hidden" aria-label="Discharged patients, newest first">
             {rows.map((r) => (
-              <li key={r.id} className={`grid gap-2 rounded-xl border border-border bg-surface p-3 ${outcomeHue(r.outcome) ? HUE[outcomeHue(r.outcome)!].edge : "border-l-4 border-l-border-strong"}`}>
+              <li key={r.id} className={`grid min-w-0 gap-2 rounded-xl border border-border bg-surface p-3 ${outcomeHue(r.outcome) ? HUE[outcomeHue(r.outcome)!].edge : "border-l-4 border-l-border-strong"}`}>
                 <Link
                   href={`/patients/${r.id}`}
-                  className="grid gap-1 hover:opacity-90 cursor-pointer"
+                  className="grid min-w-0 gap-1 hover:opacity-90 cursor-pointer"
                   onClick={(e) => {
                     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
                     e.preventDefault();
                     setActivePatientId(r.id);
                   }}
                 >
-                  <span className="flex items-baseline justify-between gap-2">
+                  <span className="flex min-w-0 items-baseline justify-between gap-2">
                     <span className="min-w-0 truncate font-medium">{r.patient}</span>
                     {r.age !== null && <span className="shrink-0 text-sm text-text-secondary">{ageText(r.age)}</span>}
                   </span>
-                  <span className={`line-clamp-2 text-sm ${isBlank(r.diagnosis) ? "text-text-muted" : ""}`}>{isBlank(r.diagnosis) ? NO_DIAGNOSIS : r.diagnosis}</span>
-                  <span className="text-sm text-text-secondary">
+                  <span className={`line-clamp-2 break-words text-sm ${isBlank(r.diagnosis) ? "text-text-muted" : ""}`}>{isBlank(r.diagnosis) ? NO_DIAGNOSIS : r.diagnosis}</span>
+                  <span className="break-words text-sm text-text-secondary">
                     {r.ward}, {r.bed}. Discharged {r.discharged}
                   </span>
                   {r.outcome && (
-                    <span className="text-sm">
+                    <span className="min-w-0 text-sm">
                       <Pill hue={outcomeHue(r.outcome)}>{r.outcome}</Pill>
                     </span>
                   )}
                 </Link>
-                {canDelete && <DeleteArchiveButton admissionId={r.id} patient={r.patient} />}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-1.5">
+                  <Link
+                    href={`/print/patient/${r.id}`}
+                    target="_blank"
+                    className="inline-flex min-h-11 touch-manipulation items-center text-sm font-medium text-text-secondary underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    Print record
+                  </Link>
+                  {canDelete && <DeleteArchiveButton admissionId={r.id} patient={r.patient} />}
+                </div>
               </li>
             ))}
           </ul>
@@ -225,6 +236,7 @@ export function ArchiveView({
         <PatientDialog
           admissionId={activePatientId}
           role={role}
+          uploadMode={uploadMode}
           onClose={() => setActivePatientId(null)}
         />
       )}

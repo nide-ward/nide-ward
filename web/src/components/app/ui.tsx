@@ -19,7 +19,7 @@ export function Panel({
   hue?: Hue;
 }) {
   return (
-    <section className={`rounded-2xl border p-4 sm:p-5 ${hue ? HUE[hue].panel : "border-border bg-surface"} ${className}`}>
+    <section className={`min-w-0 rounded-2xl border p-4 sm:p-5 ${hue ? HUE[hue].panel : "border-border bg-surface"} ${className}`}>
       {(title || action) && (
         <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -60,9 +60,9 @@ export function fmtNum(v: number | null | undefined): string {
 export function Pill({ hue, dot, pulse, children, className = "" }: { hue?: Hue; dot?: boolean; pulse?: boolean; children: ReactNode; className?: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-md border px-1.5 py-0.5 text-xs font-medium ${hue ? HUE[hue].pill : "border-border bg-surface-muted text-text-secondary"} ${className}`}
+      className={`inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md border px-1.5 py-0.5 text-xs font-medium break-words ${hue ? HUE[hue].pill : "border-border bg-surface-muted text-text-secondary"} ${className}`}
     >
-      {dot && <span aria-hidden="true" className={`size-1.5 rounded-full ${hue ? HUE[hue].dot : "bg-text-muted"} ${pulse ? "motion-safe:animate-pulse" : ""}`} />}
+      {dot && <span aria-hidden="true" className={`size-1.5 shrink-0 rounded-full ${hue ? HUE[hue].dot : "bg-text-muted"} ${pulse ? "motion-safe:animate-pulse" : ""}`} />}
       {children}
     </span>
   );

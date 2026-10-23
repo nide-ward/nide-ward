@@ -66,6 +66,54 @@ const affixText = (affix: NumberFieldAffix | undefined, value: number) => typeof
 /** iOS style resistance: travel past a limit gives less and less, and never more than `limit` pixels. */
 const rubber = (distance: number, limit = 10) => Math.sign(distance) * (1 - 1 / (Math.abs(distance) * .55 / limit + 1)) * limit;
 
+export function getMaxIntegerDigits(max: number): number | null {
+  if (!Number.isFinite(max) || max >= Number.MAX_SAFE_INTEGER) return null;
+  return String(Math.trunc(Math.abs(max))).length;
+}
+
+export function countIntegerDigits(text: string, decimalSymbol = "."): number {
+  const intPart = text.includes(decimalSymbol) ? text.slice(0, text.indexOf(decimalSymbol)) : text;
+  return intPart.replace(/\D/g, "").length;
+}
+
+export function wouldExceedIntegerDigits(next: string, max: number, decimalSymbol = "."): boolean {
+  const maxDigits = getMaxIntegerDigits(max);
+  if (maxDigits === null) return false;
+  return countIntegerDigits(next, decimalSymbol) > maxDigits;
+}
+
+export type DraftCommitResult =
+  | { action: "revert"; value: number }
+  | { action: "revert-strain"; value: number; edge: 1 | -1 }
+  | { action: "commit"; value: number };
+
+export function resolveDraftCommit({
+  draft,
+  parsed,
+  min,
+  max,
+  editStart,
+  round,
+}: {
+  draft: string;
+  parsed: number | null;
+  min: number;
+  max: number;
+  editStart: number;
+  round: (n: number) => number;
+}): DraftCommitResult {
+  if (parsed === null || draft.trim() === "") {
+    return { action: "revert", value: editStart };
+  }
+  if (parsed > max) {
+    return { action: "revert-strain", value: editStart, edge: 1 };
+  }
+  if (parsed < min) {
+    return { action: "revert-strain", value: editStart, edge: -1 };
+  }
+  return { action: "commit", value: round(parsed) };
+}
+
 /** Split a formatted number into columns keyed by place value, so 9 → 10 keeps the ones column the ones column. */
 function partsOf(value: number, format: Intl.NumberFormat): Part[] {
   const parts = format.formatToParts(value);
@@ -280,7 +328,6 @@ export function NumberField({ label, value, defaultValue = 0, onValueChange, min
   const symbols = useMemo(() => { const parts = new Intl.NumberFormat(locale).formatToParts(-1234.5); return { group: parts.find(part => part.type === "group")?.value ?? ",", decimal: parts.find(part => part.type === "decimal")?.value ?? "." }; }, [locale]);
   const round = (next: number) => Number(next.toFixed(decimals)) || 0;
   const clamp = (next: number) => Math.min(max, Math.max(min, next));
-  const snap = (next: number) => round(base + Math.round((next - base) / step) * step);
   /** Off-grid values move to the next grid line in the direction of travel, then whole steps from there. */
   const stepFrom = (from: number, steps: number) => { const index = (from - base) / step; return round(base + ((steps > 0 ? Math.floor(index + 1e-7) : Math.ceil(index - 1e-7)) + steps) * step); };
   const spoken = (next: number) => `${affixText(prefix, next)}${format.format(next)}${affixText(suffix, next)}`.trim();
@@ -365,7 +412,22 @@ export function NumberField({ label, value, defaultValue = 0, onValueChange, min
     setEditing(false);
     clearUnder();
     const parsed = parse(draft);
-    if (parsed !== null) commitValue(snap(parsed), "type");
+    const result = resolveDraftCommit({
+      draft,
+      parsed,
+      min,
+      max,
+      editStart: editStart.current,
+      round,
+    });
+    setDraft("");
+    if (result.action === "revert-strain") {
+      strain(result.edge, "type");
+      setAnnouncement(`${spoken(result.value)}, ${result.edge > 0 ? "maximum" : "minimum"}`);
+      commitValue(result.value, "type");
+    } else {
+      commitValue(result.value, "type");
+    }
   }
   function stopHold() {
     window.clearTimeout(hold.current);
@@ -394,20 +456,25 @@ export function NumberField({ label, value, defaultValue = 0, onValueChange, min
     // Home and End reach the limits; while a draft is open they move the caret as in any text field.
     if (!editing && ((event.key === "Home" && Number.isFinite(min)) || (event.key === "End" && max < Number.MAX_SAFE_INTEGER))) { event.preventDefault(); commitValue(event.key === "Home" ? min : max, "key"); return; }
     if (event.key === "Enter") { event.preventDefault(); if (editing) { selectNext.current = true; commitDraft(); } else event.currentTarget.select(); }
-    if (event.key === "Escape" && editing) { event.preventDefault(); captureShift(); setEditing(false); clearUnder(); selectNext.current = true; commitValue(editStart.current, "type"); }
+    if (event.key === "Escape" && editing) { event.preventDefault(); captureShift(); setEditing(false); clearUnder(); setDraft(""); selectNext.current = true; commitValue(editStart.current, "type"); }
   }
   function onChange(raw: string) {
     // App patch (not upstream Arc): Arabic-Indic digits and comma decimals, so "2,5" is 2.5 units, not 25.
     const text = normalizeNumericText(raw);
     const allowed = new RegExp(`[^0-9${escape(symbols.group)}${decimals || maxFraction ? escape(symbols.decimal) : ""}${min < 0 ? "\\-" : ""}]`, "g");
-    const next = text.replace(allowed, "");
+    // Leading zeros go, so typing over a "0" gives "8", not "08"; "0.5" keeps its zero.
+    const next = text.replace(allowed, "").replace(/^(-?)0+(?=\d)/, "$1");
+    if (wouldExceedIntegerDigits(next, max, symbols.decimal)) {
+      if (inputRef.current) inputRef.current.value = editing ? draft : format.format(current);
+      return;
+    }
     if (!editing) editStart.current = current;
     captureShift();
     setDraft(next);
     setEditing(true);
     // Valid drafts apply as they are typed, so anything that depends on the value follows along.
     const parsed = parse(next);
-    if (parsed !== null && parsed >= min && parsed <= max && snap(parsed) === parsed) commitValue(parsed, "type");
+    if (parsed !== null && parsed >= min && parsed <= max && round(parsed) === parsed) commitValue(parsed, "type");
     // Past the maximum warns at once; under the minimum waits, since "1" is often the start of "12".
     clearUnder();
     if (parsed !== null && parsed < min) underTimer.current = window.setTimeout(() => setUnderWarn(true), UNDER_WARN_MS);

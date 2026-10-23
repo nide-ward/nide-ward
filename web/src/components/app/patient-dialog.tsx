@@ -12,48 +12,44 @@ import { ChartView } from "./chart-view";
 interface PatientDialogProps {
   admissionId: string | null;
   role: ClinicalRole;
-  uploadMode?: "presigned" | "proxy";
+  uploadMode: "presigned" | "proxy";
   onClose: () => void;
 }
 
 export function PatientDialog({
   admissionId,
   role,
-  uploadMode = "proxy",
+  uploadMode,
   onClose,
 }: PatientDialogProps) {
   const router = useRouter();
-  const [detail, setDetail] = useState<AdmissionDetail | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState<{
+    forId: string;
+    detail: AdmissionDetail | null;
+    error: string | null;
+  } | null>(null);
 
   useEffect(() => {
-    if (!admissionId) {
-      setDetail(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+    if (!admissionId) return;
 
     let active = true;
-    setLoading(true);
-    setError(null);
 
     getAdmissionDetailAction(admissionId)
       .then((res) => {
         if (!active) return;
         if (!res?.detail) {
-          setError("Patient record could not be loaded.");
+          setLoaded({ forId: admissionId, detail: null, error: "Patient record could not be loaded." });
         } else {
-          setDetail(res.detail);
+          setLoaded({ forId: admissionId, detail: res.detail, error: null });
         }
       })
       .catch((err) => {
         if (!active) return;
-        setError(err instanceof Error ? err.message : "Failed to load patient chart.");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        setLoaded({
+          forId: admissionId,
+          detail: null,
+          error: err instanceof Error ? err.message : "Failed to load patient chart.",
+        });
       });
 
     return () => {
@@ -66,6 +62,10 @@ export function PatientDialog({
     router.refresh();
   };
 
+  const current = admissionId && loaded?.forId === admissionId ? loaded : null;
+  const loading = admissionId !== null && current === null;
+  const detail = current?.detail ?? null;
+  const error = current?.error ?? null;
   const a = detail?.admission;
   const reg = detail?.regimen;
 
@@ -94,7 +94,7 @@ export function PatientDialog({
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2 bg-surface border border-border rounded-xl text-sm font-semibold hover:bg-surface-muted"
+                className="inline-flex min-h-11 touch-manipulation items-center justify-center px-4 py-2 bg-surface border border-border rounded-xl text-sm font-semibold hover:bg-surface-muted"
               >
                 Close
               </button>
@@ -111,6 +111,7 @@ export function PatientDialog({
               bedName={detail.bed.name}
               wardTitle={detail.ward.title}
               wardId={detail.ward.id}
+              onDischarged={handleClose}
               discharged={
                 a.status === "discharged" && a.dischargedAt
                   ? {

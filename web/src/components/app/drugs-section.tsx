@@ -35,13 +35,14 @@ export function DrugsSection({ meds }: { meds: MedRow[] }) {
           {meds.map((m) => (
             <li key={m.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
               <div className="min-w-0">
-                <p className="font-medium">{m.name}</p>
-                <p className="text-sm text-text-secondary">{[m.dose, m.frequency].filter(Boolean).join(", ") || "No dose recorded"}</p>
+                <p className="break-words font-medium">{m.name}</p>
+                <p className="break-words text-sm text-text-secondary">{[m.dose, m.frequency].filter(Boolean).join(", ") || "No dose recorded"}</p>
               </div>
               {editable && (
                 <Button
                   size="sm"
                   variant="ghost"
+                  className="shrink-0"
                   disabled={pending}
                   aria-label={`Remove ${m.name}`}
                   onClick={() => {
@@ -78,9 +79,9 @@ export function DrugsSection({ meds }: { meds: MedRow[] }) {
             <tbody>
               {meds.map((m) => (
                 <tr key={m.id} className="border-t border-border">
-                  <td className="px-3 py-2 font-medium">{m.name}</td>
-                  <td className="tnum px-3 py-2">{m.dose}</td>
-                  <td className="px-3 py-2">{m.frequency}</td>
+                  <td className="px-3 py-2 font-medium [overflow-wrap:anywhere]">{m.name}</td>
+                  <td className="tnum px-3 py-2 [overflow-wrap:anywhere]">{m.dose?.trim() || "—"}</td>
+                  <td className="px-3 py-2 [overflow-wrap:anywhere]">{m.frequency?.trim() || "—"}</td>
                   <td className="px-3 py-2 text-right">
                     {editable && (
                       <Button

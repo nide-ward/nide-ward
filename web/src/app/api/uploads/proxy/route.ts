@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { uploadMode } from "@/lib/env";
-import { MAX_UPLOAD_BYTES, newObjectKey, putObject } from "@/lib/storage";
-import { guardUpload, sniffMatches } from "../guard";
+import { newObjectKey, putObject } from "@/lib/storage";
+import { guardUpload } from "../guard";
+import { MAX_UPLOAD_BYTES, sniffImageType } from "../image-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
   if (!guard.ok) return NextResponse.json({ error: guard.error }, { status: guard.status });
 
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (!sniffMatches(bytes, file.type)) {
+  if (sniffImageType(bytes) !== file.type) {
     return NextResponse.json({ error: "That file is not a valid image." }, { status: 400 });
   }
   const key = newObjectKey(admissionId as string, file.type);

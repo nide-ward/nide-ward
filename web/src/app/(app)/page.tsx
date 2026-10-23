@@ -1,6 +1,7 @@
 import { AutoRefresh } from "@/components/app/auto-refresh";
 import { Board } from "@/components/app/board";
 import EmptyState from "@/components/arc/empty-state/empty-state";
+import { uploadMode } from "@/lib/env";
 import { requireStaff } from "@/lib/session";
 import { getBoard } from "@/server/queries";
 
@@ -21,7 +22,7 @@ export default async function BoardPage() {
   return (
     <>
       <AutoRefresh intervalMs={10000} />
-      <Board wards={wards} role={staff.role} nowIso={new Date().toISOString()} />
+      <Board wards={wards} role={staff.role} uploadMode={uploadMode()} />
     </>
   );
 }
