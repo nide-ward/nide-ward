@@ -44,7 +44,19 @@ export function DrugsSection({ meds }: { meds: MedRow[] }) {
                   variant="ghost"
                   disabled={pending}
                   aria-label={`Remove ${m.name}`}
-                  onClick={() => void run(() => removeMedication({ admissionId: chart.admissionId, version: chart.version, medicationId: m.id }), (r) => chart.setVersion(r.version))}
+                  onClick={() => {
+                    const removePayload = { admissionId: chart.admissionId, version: chart.version, medicationId: m.id };
+                    void run(
+                      () => removeMedication(removePayload),
+                      (r) => chart.setVersion(r.version),
+                      {
+                        type: "removeMedication",
+                        payload: removePayload,
+                        description: `Remove drug ${m.name}`,
+                        optimisticResult: { version: chart.version + 1 },
+                      },
+                    );
+                  }}
                 >
                   Remove
                 </Button>
@@ -76,7 +88,19 @@ export function DrugsSection({ meds }: { meds: MedRow[] }) {
                         variant="ghost"
                         disabled={pending}
                         aria-label={`Remove ${m.name}`}
-                        onClick={() => void run(() => removeMedication({ admissionId: chart.admissionId, version: chart.version, medicationId: m.id }), (r) => chart.setVersion(r.version))}
+                        onClick={() => {
+                    const removePayload = { admissionId: chart.admissionId, version: chart.version, medicationId: m.id };
+                    void run(
+                      () => removeMedication(removePayload),
+                      (r) => chart.setVersion(r.version),
+                      {
+                        type: "removeMedication",
+                        payload: removePayload,
+                        description: `Remove drug ${m.name}`,
+                        optimisticResult: { version: chart.version + 1 },
+                      },
+                    );
+                  }}
                       >
                         Remove
                       </Button>
@@ -94,13 +118,20 @@ export function DrugsSection({ meds }: { meds: MedRow[] }) {
           className="mt-4 grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end"
           onSubmit={(e) => {
             e.preventDefault();
+            const addPayload = { admissionId: chart.admissionId, version: chart.version, name, dose, frequency: freq };
             void run(
-              () => addMedication({ admissionId: chart.admissionId, version: chart.version, name, dose, frequency: freq }),
+              () => addMedication(addPayload),
               (r) => {
                 chart.setVersion(r.version);
                 setName("");
                 setDose("");
                 setFreq("");
+              },
+              {
+                type: "addMedication",
+                payload: addPayload,
+                description: `Add drug ${name}`,
+                optimisticResult: { version: chart.version + 1 },
               },
             );
           }}

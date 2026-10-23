@@ -12,6 +12,7 @@ import { ROLE_HUE } from "@/lib/hues";
 import { Pill } from "./ui";
 import { CairoClock } from "./cairo-clock";
 import { ThemePicker } from "./theme-picker";
+import { SyncStatusPill } from "./sync-status-pill";
 
 interface Props {
   name: string;
@@ -55,10 +56,10 @@ export function AppHeader({ name, role, roster, theme }: Props) {
 
   return (
     <>
-      <header className="no-print">
+      <header className="no-print w-full">
         {/* Dark slate bar with the teal accent, as in the prototype. */}
-        <div className="bg-topbar pt-[env(safe-area-inset-top)] text-topbar-ink">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6">
+        <div className="w-full bg-topbar pt-[env(safe-area-inset-top)] text-topbar-ink">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-3 py-2 sm:px-6">
             <p className="flex min-w-0 items-center gap-2 text-sm">
               <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-topbar-accent" />
               <span className="truncate font-medium text-topbar-strong">
@@ -69,6 +70,7 @@ export function AppHeader({ name, role, roster, theme }: Props) {
             </p>
             <div className="flex shrink-0 items-center gap-2">
               <CairoClock className="hidden text-sm text-topbar-ink sm:inline" />
+              <SyncStatusPill />
               <ThemePicker initial={theme} />
               <span className="hidden sm:inline-flex">
                 <Button
@@ -98,8 +100,8 @@ export function AppHeader({ name, role, roster, theme }: Props) {
             </div>
           </div>
         </div>
-        <div className="border-b border-border bg-surface">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-x-6 gap-y-2 px-4 py-2.5 sm:flex-wrap sm:px-6 sm:py-3">
+        <div className="w-full border-b border-border bg-surface">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-x-6 gap-y-2 px-3 py-2.5 sm:flex-wrap sm:px-6 sm:py-3">
             <div className="flex min-w-0 items-center gap-3">
               <span aria-hidden="true" className="hidden size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground sm:inline-flex">
                 <Building2 size={20} />
@@ -135,8 +137,8 @@ export function AppHeader({ name, role, roster, theme }: Props) {
         </div>
       </header>
 
-      <nav aria-label="Main" className="no-print pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface sm:hidden">
-        <ul className="flex">
+      <nav aria-label="Main" className="no-print pb-safe fixed inset-x-0 bottom-0 z-40 w-full border-t border-border bg-surface sm:hidden">
+        <ul className="flex w-full items-center justify-around">
           {links.map((l) => {
             const Icon = l.icon;
             const active = isActive(l.href);

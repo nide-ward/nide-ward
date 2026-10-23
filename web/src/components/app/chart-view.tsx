@@ -11,10 +11,12 @@ import { NO_DIAGNOSIS, ageText, isBlank, patientLabel } from "@/lib/display";
 import { deleteArchivedAdmission, readmitPatient } from "@/server/actions/patients";
 import { can, type ClinicalRole } from "@/lib/permissions";
 import { formatCairo } from "@/lib/time";
-import { AbgDueBadge, AbgSection, type AbgRowData } from "./abg-section";
+import { AbgSection, type AbgRowData } from "./abg-section";
 import { ChartProvider, useChart } from "./chart-context";
 import { DischargeDialog } from "./discharge-dialog";
+import { TransferToIcuDialog } from "./transfer-icu-dialog";
 import { DrugsSection, type MedRow } from "./drugs-section";
+import { FileText } from "lucide-react";
 import { InsulinSection, type InsulinData } from "./insulin-section";
 import { MediaSection, type MediaRow } from "./media-section";
 import { OverviewSection, type OverviewData } from "./overview-section";
@@ -121,15 +123,22 @@ function Inner(p: ChartViewProps & { epoch: number }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {p.discharged ? <Pill>Discharged</Pill> : <AbgDueBadge lastTakenAt={latest ? latest.takenAt : null} nowIso={p.nowIso} />}
+          {p.discharged && <Pill>Discharged</Pill>}
           <Link
             href={`/print/patient/${p.admissionId}`}
             target="_blank"
-            className="hidden min-h-11 items-center rounded-xl border border-border-strong px-4 text-sm hover:bg-surface-muted sm:inline-flex"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-border-strong px-3 py-1.5 text-xs font-semibold hover:bg-surface-muted"
+            title="Open printable handover report (save as PDF)"
           >
-            Print chart
+            <FileText size={15} aria-hidden="true" />
+            <span>Print PDF / Handover</span>
           </Link>
-          {!p.discharged && <DischargeDialog patientName={p.overview.patientName} bedName={p.bedName} />}
+          {!p.discharged && (
+            <>
+              <TransferToIcuDialog patientName={p.overview.patientName} bedName={p.bedName} />
+              <DischargeDialog patientName={p.overview.patientName} bedName={p.bedName} />
+            </>
+          )}
         </div>
       </header>
 
@@ -158,7 +167,7 @@ function Inner(p: ChartViewProps & { epoch: number }) {
           <OverviewSection key={`o${p.epoch}`} data={p.overview} hue={wardHue(p.wardId)} />
         </TabsContent>
         <TabsContent value="abg">
-          <AbgSection rows={p.abgs} nowIso={p.nowIso} />
+          <AbgSection rows={p.abgs} nowIso={p.nowIso} initialAcetone={p.overview.urineAcetone} currentRbg={p.overview.currentRbg} />
         </TabsContent>
         <TabsContent value="insulin">
           <InsulinSection key={`i${p.epoch}`} data={p.insulin} />

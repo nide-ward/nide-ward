@@ -1,6 +1,6 @@
-.field { --nf-height: var(--control-height-md); --nf-step: 34px; --nf-inset: 3px; --nf-text: var(--text-base); --nf-width: var(--number-field-width, 196px); --nf-limit: color-mix(in oklab, var(--warning) 72%, var(--foreground)); display: grid; min-width: 0; }
-.field[data-size="sm"] { --nf-height: var(--control-height-sm); --nf-step: 28px; --nf-inset: 3px; --nf-text: var(--text-sm); --nf-width: var(--number-field-width, 164px); }
-.field[data-size="lg"] { --nf-height: var(--control-height-lg); --nf-step: 40px; --nf-inset: 4px; --nf-text: var(--text-lg); --nf-width: var(--number-field-width, 228px); }
+.field { --nf-height: var(--control-height-md); --nf-step: 34px; --nf-inset: 3px; --nf-text: var(--text-base); --nf-width: var(--number-field-width, 220px); --nf-limit: color-mix(in oklab, var(--warning) 72%, var(--foreground)); display: grid; min-width: 0; }
+.field[data-size="sm"] { --nf-height: var(--control-height-sm); --nf-step: 28px; --nf-inset: 3px; --nf-text: var(--text-sm); --nf-width: var(--number-field-width, 180px); }
+.field[data-size="lg"] { --nf-height: var(--control-height-lg); --nf-step: 40px; --nf-inset: 4px; --nf-text: var(--text-lg); --nf-width: var(--number-field-width, 240px); }
 :root[data-theme="dark"] .field { --nf-limit: color-mix(in oklab, var(--warning) 88%, var(--foreground)); }
 /* The label row matches the control's width, so the limit note sits over the stepper it answers. */
 .head { display: flex; width: min(100%, var(--nf-width)); align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
@@ -34,8 +34,8 @@
 .valueWrap { position: relative; display: flex; min-width: 0; flex: 1; align-self: stretch; align-items: center; justify-content: center; cursor: text; }
 .control[data-disabled] .valueWrap { cursor: not-allowed; }
 /* The number, its prefix, and its suffix travel as one centered group. Tabular digits keep every column the same width. */
-.value { display: inline-flex; align-items: center; white-space: nowrap; color: var(--foreground); font-size: var(--nf-text); transition: color var(--duration-standard) var(--ease-standard); font-weight: 500; line-height: var(--leading-body); letter-spacing: var(--tracking-body); font-variant-numeric: tabular-nums; }
-.affix { display: inline-flex; color: var(--text-secondary); font-weight: 400; }
+.value { display: inline-flex; align-items: center; justify-content: center; gap: 3px; white-space: nowrap; color: var(--foreground); font-size: var(--nf-text); transition: color var(--duration-standard) var(--ease-standard); font-weight: 500; line-height: var(--leading-body); letter-spacing: var(--tracking-body); font-variant-numeric: tabular-nums; }
+.affix { display: inline-flex; color: var(--text-secondary); font-weight: 500; margin-left: 2px; }
 .char { display: inline-block; overflow-x: clip; white-space: pre; }
 /* The rolling digits and the real input share one cell. The input only draws the caret and selection; its text is always painted by a span
    (the digits, or the draft mirror while typing), so the value keeps one weight and position whether it is rolling or being edited. */

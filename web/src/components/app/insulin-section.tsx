@@ -36,38 +36,44 @@ export function InsulinSection({ data }: { data: InsulinData }) {
         onSubmit={(e) => {
           e.preventDefault();
           setSaved(false);
+          const insulinPayload = {
+            admissionId: chart.admissionId,
+            version: chart.version,
+            basalUnits: v.basal,
+            breakfastUnits: v.b,
+            lunchUnits: v.l,
+            dinnerUnits: v.d,
+          };
           void run(
-            () =>
-              saveInsulin({
-                admissionId: chart.admissionId,
-                version: chart.version,
-                basalUnits: v.basal,
-                breakfastUnits: v.b,
-                lunchUnits: v.l,
-                dinnerUnits: v.d,
-              }),
+            () => saveInsulin(insulinPayload),
             (r) => {
               chart.setVersion(r.version);
               setSaved(true);
+            },
+            {
+              type: "saveInsulin",
+              payload: insulinPayload,
+              description: `Save insulin regimen (Basal ${v.basal}U)`,
+              optimisticResult: { version: chart.version + 1 },
             },
           );
         }}
       >
         <Panel hue="sky" title="Actrapid every 2 hours (Q2H)" description="Short-acting regular insulin administered every 2 hours.">
           <div className="max-w-xs">
-            <NumberField label="Actrapid every 2 hours" suffix=" U" min={0} max={500} step={0.5} value={v.q2h} onValueChange={(x) => setV((s) => ({ ...s, q2h: x }))} disabled={!editable} />
+            <NumberField label="Actrapid every 2 hours" suffix=" U" min={0} max={500} step={2} value={v.q2h} onValueChange={(x) => setV((s) => ({ ...s, q2h: x }))} disabled={!editable} />
           </div>
         </Panel>
         <Panel hue="purple" title="Basal insulin" description="Lantus (glargine), once a day at 11:00 PM.">
           <div className="max-w-xs">
-            <NumberField label="Basal Lantus at 11:00 PM" suffix=" U" min={0} max={500} step={0.5} value={v.basal} onValueChange={(x) => setV((s) => ({ ...s, basal: x }))} disabled={!editable} />
+            <NumberField label="Basal Lantus at 11:00 PM" suffix=" U" min={0} max={500} step={2} value={v.basal} onValueChange={(x) => setV((s) => ({ ...s, basal: x }))} disabled={!editable} />
           </div>
         </Panel>
         <Panel hue="amber" title="Bolus insulin" description="Actrapid before each meal.">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <NumberField label="Actrapid breakfast at 9:00 AM" suffix=" U" min={0} max={500} step={0.5} value={v.b} onValueChange={(x) => setV((s) => ({ ...s, b: x }))} disabled={!editable} />
-          <NumberField label="Actrapid lunch at 3:00 PM" suffix=" U" min={0} max={500} step={0.5} value={v.l} onValueChange={(x) => setV((s) => ({ ...s, l: x }))} disabled={!editable} />
-          <NumberField label="Actrapid dinner at 9:00 PM" suffix=" U" min={0} max={500} step={0.5} value={v.d} onValueChange={(x) => setV((s) => ({ ...s, d: x }))} disabled={!editable} />
+          <NumberField label="Actrapid breakfast at 9:00 AM" suffix=" U" min={0} max={500} step={2} value={v.b} onValueChange={(x) => setV((s) => ({ ...s, b: x }))} disabled={!editable} />
+          <NumberField label="Actrapid lunch at 3:00 PM" suffix=" U" min={0} max={500} step={2} value={v.l} onValueChange={(x) => setV((s) => ({ ...s, l: x }))} disabled={!editable} />
+          <NumberField label="Actrapid dinner at 9:00 PM" suffix=" U" min={0} max={500} step={2} value={v.d} onValueChange={(x) => setV((s) => ({ ...s, d: x }))} disabled={!editable} />
           </div>
         </Panel>
         <InlineError>{error}</InlineError>

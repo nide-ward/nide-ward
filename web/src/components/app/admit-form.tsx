@@ -95,7 +95,7 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
   const abgEntered = Object.values(abg).some((v) => v.trim() !== "");
 
   // Step 3: insulin and drugs
-  const [ins, setIns] = useState({ basal: 0, b: 0, l: 0, d: 0 });
+  const [ins, setIns] = useState({ basal: 0, q2h: 0, b: 0, l: 0, d: 0 });
   const [meds, setMeds] = useState<Med[]>([]);
   const [med, setMed] = useState<Med>({ name: "", dose: "", frequency: "" });
 
@@ -158,40 +158,50 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
     const admittedAt = fromCairoInputValue(when);
     const drawnAt = fromCairoInputValue(abgAt ?? when) ?? admittedAt ?? new Date();
     const n = (k: FieldKey) => parseMeasurement(abg[k]);
+    const admitPayload = {
+      bedId,
+      patientName: name,
+      age: parsedAge.value,
+      // Blank or unreadable time: the server uses the current time.
+      admittedAt: admittedAt ? admittedAt.toISOString() : undefined,
+      diagnosis: dx,
+      riskFactors: risk,
+      firstAbg: abgEntered
+        ? {
+            takenAt: drawnAt.toISOString(),
+            ph: n("ph") as number,
+            pco2: n("pco2"),
+            po2: n("po2"),
+            hco3: n("hco3"),
+            hco3Std: n("hco3Std"),
+            na: n("na"),
+            k: n("k"),
+            cl: n("cl"),
+            ca: n("ca"),
+            rbg: n("rbg"),
+            hb: n("hb"),
+          }
+        : null,
+      insulin: { basalUnits: ins.basal, breakfastUnits: ins.b, lunchUnits: ins.l, dinnerUnits: ins.d },
+      // A drug typed but not yet added with "Add drug" is still saved, plus Q2H Actrapid if set.
+      medications: [
+        ...(ins.q2h > 0 ? [{ name: "Insulin Actrapid (Q2H)", dose: `${ins.q2h} U`, frequency: "Every 2 hours" }] : []),
+        ...(med.name.trim() ? [...meds, { name: med.name.trim(), dose: med.dose.trim(), frequency: med.frequency.trim() }] : meds),
+      ],
+      labsImaging: labs,
+      consultations: consults,
+      followupPlan: plan,
+    };
+
     void run(
-      () =>
-        admitPatient({
-          bedId,
-          patientName: name,
-          age: parsedAge.value,
-          // Blank or unreadable time: the server uses the current time.
-          admittedAt: admittedAt ? admittedAt.toISOString() : undefined,
-          diagnosis: dx,
-          riskFactors: risk,
-          firstAbg: abgEntered
-            ? {
-                takenAt: drawnAt.toISOString(),
-                ph: n("ph") as number,
-                pco2: n("pco2"),
-                po2: n("po2"),
-                hco3: n("hco3"),
-                hco3Std: n("hco3Std"),
-                na: n("na"),
-                k: n("k"),
-                cl: n("cl"),
-                ca: n("ca"),
-                rbg: n("rbg"),
-                hb: n("hb"),
-              }
-            : null,
-          insulin: { basalUnits: ins.basal, breakfastUnits: ins.b, lunchUnits: ins.l, dinnerUnits: ins.d },
-          // A drug typed but not yet added with "Add drug" is still saved.
-          medications: med.name.trim() ? [...meds, { name: med.name.trim(), dose: med.dose.trim(), frequency: med.frequency.trim() }] : meds,
-          labsImaging: labs,
-          consultations: consults,
-          followupPlan: plan,
-        }),
+      () => admitPatient(admitPayload),
       (r) => onDone(r.admissionId),
+      {
+        type: "admitPatient",
+        payload: admitPayload,
+        description: `Admit Bed ${bedId} (${name || "Patient"})`,
+        optimisticResult: { admissionId: `offline-${Date.now()}` },
+      },
     );
   }
 
@@ -316,17 +326,23 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
         <div className="grid gap-4">
           <p className="tnum rounded-xl bg-surface-muted px-3 py-2 text-sm" aria-live="polite">
             {regimenSummary({ basalUnits: ins.basal, breakfastUnits: ins.b, lunchUnits: ins.l, dinnerUnits: ins.d })}
+            {ins.q2h > 0 && ` | Actrapid Q2H: ${ins.q2h}U`}
           </p>
+          <Panel hue="sky" title="Actrapid every 2 hours (Q2H)" description="Short-acting regular insulin administered every 2 hours.">
+            <div className="max-w-xs">
+              <NumberField label="Actrapid every 2 hours" suffix=" U" min={0} max={500} step={2} value={ins.q2h} onValueChange={(x) => setIns((s) => ({ ...s, q2h: x }))} />
+            </div>
+          </Panel>
           <Panel hue="purple" title="Basal insulin" description="Lantus (glargine), given once a day at 11:00 PM.">
             <div className="max-w-xs">
-              <NumberField label="Basal Lantus at 11:00 PM" suffix=" U" min={0} max={500} step={0.5} value={ins.basal} onValueChange={(x) => setIns((s) => ({ ...s, basal: x }))} />
+              <NumberField label="Basal Lantus at 11:00 PM" suffix=" U" min={0} max={500} step={2} value={ins.basal} onValueChange={(x) => setIns((s) => ({ ...s, basal: x }))} />
             </div>
           </Panel>
           <Panel hue="amber" title="Bolus insulin" description="Actrapid before each meal.">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <NumberField label="Actrapid breakfast at 9:00 AM" suffix=" U" min={0} max={500} step={0.5} value={ins.b} onValueChange={(x) => setIns((s) => ({ ...s, b: x }))} />
-              <NumberField label="Actrapid lunch at 3:00 PM" suffix=" U" min={0} max={500} step={0.5} value={ins.l} onValueChange={(x) => setIns((s) => ({ ...s, l: x }))} />
-              <NumberField label="Actrapid dinner at 9:00 PM" suffix=" U" min={0} max={500} step={0.5} value={ins.d} onValueChange={(x) => setIns((s) => ({ ...s, d: x }))} />
+              <NumberField label="Actrapid breakfast at 9:00 AM" suffix=" U" min={0} max={500} step={2} value={ins.b} onValueChange={(x) => setIns((s) => ({ ...s, b: x }))} />
+              <NumberField label="Actrapid lunch at 3:00 PM" suffix=" U" min={0} max={500} step={2} value={ins.l} onValueChange={(x) => setIns((s) => ({ ...s, l: x }))} />
+              <NumberField label="Actrapid dinner at 9:00 PM" suffix=" U" min={0} max={500} step={2} value={ins.d} onValueChange={(x) => setIns((s) => ({ ...s, d: x }))} />
             </div>
           </Panel>
 

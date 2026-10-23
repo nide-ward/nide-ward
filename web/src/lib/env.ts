@@ -53,5 +53,8 @@ export const dbEnv = () => parse("the database", dbSchema);
 export const authEnv = () => parse("authentication", authSchema);
 export const storageEnv = () => parse("object storage", storageSchema);
 /** Safe to call from the client-facing config route: no secrets, never throws. */
-export const uploadMode = (): "presigned" | "proxy" => (process.env.S3_UPLOAD_MODE === "proxy" ? "proxy" : "presigned");
+export const uploadMode = (): "presigned" | "proxy" => {
+  if (process.env.S3_UPLOAD_MODE === "proxy" || !process.env.S3_BUCKET) return "proxy";
+  return "presigned";
+};
 export const seedAdminEnv = () => parse("the first attending seed", seedAdminSchema);

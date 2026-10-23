@@ -24,7 +24,11 @@ export const DISCHARGE_OUTCOMES = [
   "Transferred to Outside Facility",
 ] as const;
 
-const isoDate = z.iso.datetime({ offset: true }).transform((v) => new Date(v));
+const isoDate = z.union([
+  z.string().datetime({ offset: true }),
+  z.string().refine((s) => !isNaN(Date.parse(s)), { message: "Invalid date format" }),
+  z.date(),
+]).transform((v) => (v instanceof Date ? v : new Date(v)));
 
 const abgMeasures = {
   takenAt: isoDate,

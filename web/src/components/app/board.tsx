@@ -89,9 +89,6 @@ function BedCard({ bed, ward, now, canAdmit, onAdmit }: CardProps) {
         <p className={`truncate text-base font-medium ${nameBlank ? "text-text-secondary" : ""}`}>{who}</p>
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-text-secondary">
           <span>{ageText(a.age)}</span>
-          <Pill hue={status.isDue ? "rose" : "emerald"} dot pulse={status.isDue}>
-            {status.text}
-          </Pill>
         </div>
         <p className={`line-clamp-2 text-sm ${isBlank(a.diagnosis) ? "text-text-muted" : ""}`}>{isBlank(a.diagnosis) ? NO_DIAGNOSIS : a.diagnosis}</p>
         {latest && (

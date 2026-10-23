@@ -37,6 +37,11 @@
       box-shadow: 0 0 12px 2px rgba(6, 182, 212, 0.8);
       animation: scanLaser 2s ease-in-out infinite;
     }
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+      width: 100%;
+    }
     @media print {
       body { background: white !important; color: black !important; font-size: 10pt; }
       header, .no-print, .floor-tab, #patient-modal, #toast, #search-filter-section, #shift-modal, #cloud-sync-modal { display: none !important; }
@@ -48,7 +53,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased overflow-x-hidden">
 
   <!-- Printable Area -->
   <div id="print-area" class="p-6"></div>
@@ -83,6 +88,10 @@
         </div>
         <button id="btn-edit-shift" class="text-teal-400 hover:text-teal-300 font-medium underline">
           Shift Roster
+        </button>
+        <!-- Dark / Light Mode Toggle -->
+        <button id="btn-theme-toggle" class="flex items-center space-x-1 px-2.5 py-1 rounded-lg border transition bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700" title="Toggle Light / Dark mode">
+          <span id="theme-icon">🌙</span>
         </button>
       </div>
     </div>
@@ -143,8 +152,6 @@
         <span class="text-slate-400 font-medium text-[11px] mr-1">Filter:</span>
         <button type="button" class="quick-filter-btn px-2.5 py-1 rounded-lg border font-medium transition bg-teal-50 text-teal-700 border-teal-200" data-filter="all">All Beds</button>
         <button type="button" class="quick-filter-btn px-2.5 py-1 rounded-lg border font-medium transition bg-white text-slate-600 border-slate-200 hover:bg-slate-50" data-filter="occupied">Occupied Only</button>
-        <button type="button" class="quick-filter-btn px-2.5 py-1 rounded-lg border font-medium transition bg-white text-slate-600 border-slate-200 hover:bg-slate-50" data-filter="abg-due">ABG Due (>4h)</button>
-        <button type="button" class="quick-filter-btn px-2.5 py-1 rounded-lg border font-medium transition bg-white text-slate-600 border-slate-200 hover:bg-slate-50" data-filter="shift-ready">Ready for Basal-Bolus (pH>7.34)</button>
       </div>
     </div>
 
@@ -224,6 +231,31 @@
       </div>
 
       <div class="p-5 space-y-4 text-xs">
+        <!-- Hospital Signal & Offline Sync Status Box -->
+        <div id="modal-sync-status-box" class="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-800 flex items-center gap-1.5">
+              <span id="modal-status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span id="modal-status-title">Online • Connected & In Sync</span>
+            </span>
+            <button type="button" onclick="flushOfflineQueueStandalone()" class="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-[11px] shadow-xs">
+              Sync Now ↻
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div class="p-2 bg-white rounded border border-slate-200">
+              <span class="text-slate-500 block">Pending Offline Queue:</span>
+              <b id="modal-queue-count" class="text-slate-800 font-mono">0 updates</b>
+            </div>
+            <div class="p-2 bg-white rounded border border-slate-200">
+              <span class="text-slate-500 block">Last Saved:</span>
+              <b id="modal-last-saved" class="text-slate-800 font-mono">Just now</b>
+            </div>
+          </div>
+          <p id="modal-reception-hint" class="text-[11px] text-slate-500">
+            Hospital Reception Protection: If cellular or Wi-Fi signal drops on the ward, all patient admissions, ABGs, and plan changes are preserved locally on this phone and uploaded automatically as soon as connection is restored.
+          </p>
+        </div>
         <!-- Database Backend Provider Selector -->
         <div class="bg-slate-100 p-1.5 rounded-xl border border-slate-200 flex items-center gap-1.5">
           <button type="button" id="btn-select-provider-neon" class="flex-1 py-1.5 px-3 rounded-lg font-bold text-xs transition flex items-center justify-center space-x-1.5 bg-emerald-600 text-white shadow-xs">
@@ -466,16 +498,16 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       </div>
       <form id="shift-form" class="p-5 space-y-3 text-xs">
         <div>
-          <label class="block font-semibold text-slate-700 mb-1" for="shift-doc-1">Duty Doctor 1 *</label>
-          <input type="text" id="shift-doc-1" required placeholder="e.g. Dr. Ahmed Taha" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          <label class="block font-semibold text-slate-700 mb-1" for="shift-doc-1">Duty Doctor 1 (Registered Profiles Only) *</label>
+          <select id="shift-doc-1" required class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none bg-white font-medium"></select>
         </div>
         <div>
           <label class="block font-semibold text-slate-700 mb-1" for="shift-doc-2">Duty Doctor 2 (Optional)</label>
-          <input type="text" id="shift-doc-2" placeholder="e.g. Dr. Mona Youssef" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          <select id="shift-doc-2" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none bg-white font-medium"></select>
         </div>
         <div>
-          <label class="block font-semibold text-slate-700 mb-1" for="shift-attending">Attending Physician / Consultant *</label>
-          <input type="text" id="shift-attending" required placeholder="e.g. Prof. Khaled Fawzy" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          <label class="block font-semibold text-slate-700 mb-1" for="shift-attending">Attending Consultant (Registered Profiles Only) *</label>
+          <select id="shift-attending" required class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none bg-white font-medium"></select>
         </div>
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" id="btn-cancel-shift" class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">Cancel</button>
@@ -574,6 +606,24 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
 
         <!-- SECTION 2: WHOLE BLOOD GASES & AI-ASSISTED ABG READER -->
         <div id="section-abg" class="modal-section space-y-4 hidden">
+
+          <!-- Urine Acetone Level (Monitored alongside ABG) -->
+          <div class="bg-teal-50/70 border border-teal-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <label class="block text-xs font-bold text-teal-950 uppercase tracking-wider mb-0.5" for="patient-urine-acetone">Urine Acetone Level</label>
+              <p class="text-[11px] text-teal-800">Monitored alongside serial acid-base progression.</p>
+            </div>
+            <div class="w-48">
+              <select id="patient-urine-acetone" class="w-full px-3 py-1.5 border border-teal-300 rounded-lg text-xs bg-white font-semibold text-slate-800 focus:ring-1 focus:ring-teal-500 focus:outline-none">
+                <option value="Negative">Negative (Nil)</option>
+                <option value="Trace">Trace (+/-)</option>
+                <option value="+">+ (Small)</option>
+                <option value="++">++ (Moderate)</option>
+                <option value="+++">+++ (Large)</option>
+                <option value="++++">++++ (Very Large)</option>
+              </select>
+            </div>
+          </div>
 
           <!-- New ABG Data Entry Form -->
           <div class="bg-sky-50/60 border border-sky-200 rounded-xl p-3.5">
@@ -731,9 +781,13 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1" for="insulin-actrapid-2h-units">Actrapid Q2H Dose (Units)</label>
-                <div class="relative">
-                  <input type="number" min="0" step="0.5" id="insulin-actrapid-2h-units" placeholder="e.g. 5" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-sky-500 focus:outline-none font-bold">
-                  <span class="absolute right-3 top-2 text-[11px] text-slate-400 font-bold">Units</span>
+                <div class="flex items-center space-x-1.5">
+                  <button type="button" onclick="stepInput('insulin-actrapid-2h-units', -2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&minus;</button>
+                  <div class="relative flex-1">
+                    <input type="number" min="0" step="2" id="insulin-actrapid-2h-units" placeholder="0" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white text-center focus:ring-1 focus:ring-sky-500 focus:outline-none font-bold">
+                    <span class="absolute right-2.5 top-2 text-[10px] text-slate-400 font-bold">U</span>
+                  </div>
+                  <button type="button" onclick="stepInput('insulin-actrapid-2h-units', 2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&plus;</button>
                 </div>
               </div>
               <div>
@@ -754,9 +808,13 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1" for="insulin-basal-units">Basal Dose (Units) *</label>
-                <div class="relative">
-                  <input type="number" min="0" step="1" id="insulin-basal-units" placeholder="e.g. 18" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-purple-500 focus:outline-none font-bold">
-                  <span class="absolute right-3 top-2 text-[11px] text-slate-400 font-bold">Units</span>
+                <div class="flex items-center space-x-1.5">
+                  <button type="button" onclick="stepInput('insulin-basal-units', -2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&minus;</button>
+                  <div class="relative flex-1">
+                    <input type="number" min="0" step="2" id="insulin-basal-units" placeholder="0" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white text-center focus:ring-1 focus:ring-purple-500 focus:outline-none font-bold">
+                    <span class="absolute right-2.5 top-2 text-[10px] text-slate-400 font-bold">U</span>
+                  </div>
+                  <button type="button" onclick="stepInput('insulin-basal-units', 2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&plus;</button>
                 </div>
               </div>
               <div>
@@ -789,7 +847,14 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             <div id="bolus-panel-breakfast" class="bolus-panel grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1" for="bolus-breakfast-units">Breakfast Dose (Units)</label>
-                <input type="number" min="0" step="1" id="bolus-breakfast-units" placeholder="e.g. 6" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                <div class="flex items-center space-x-1.5">
+                  <button type="button" onclick="stepInput('bolus-breakfast-units', -2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&minus;</button>
+                  <div class="relative flex-1">
+                    <input type="number" min="0" step="2" id="bolus-breakfast-units" placeholder="0" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white text-center focus:ring-1 focus:ring-amber-500 focus:outline-none font-bold">
+                    <span class="absolute right-2.5 top-2 text-[10px] text-slate-400 font-bold">U</span>
+                  </div>
+                  <button type="button" onclick="stepInput('bolus-breakfast-units', 2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&plus;</button>
+                </div>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1" for="bolus-breakfast-notes">Pre-meal Target & Notes</label>
@@ -800,7 +865,14 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             <div id="bolus-panel-lunch" class="bolus-panel grid grid-cols-1 sm:grid-cols-2 gap-3 hidden">
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1" for="bolus-lunch-units">Lunch Dose (Units)</label>
-                <input type="number" min="0" step="1" id="bolus-lunch-units" placeholder="e.g. 8" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                <div class="flex items-center space-x-1.5">
+                  <button type="button" onclick="stepInput('bolus-lunch-units', -2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&minus;</button>
+                  <div class="relative flex-1">
+                    <input type="number" min="0" step="2" id="bolus-lunch-units" placeholder="0" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white text-center focus:ring-1 focus:ring-amber-500 focus:outline-none font-bold">
+                    <span class="absolute right-2.5 top-2 text-[10px] text-slate-400 font-bold">U</span>
+                  </div>
+                  <button type="button" onclick="stepInput('bolus-lunch-units', 2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&plus;</button>
+                </div>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1" for="bolus-lunch-notes">Pre-meal Target & Notes</label>
@@ -811,7 +883,14 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             <div id="bolus-panel-dinner" class="bolus-panel grid grid-cols-1 sm:grid-cols-2 gap-3 hidden">
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1" for="bolus-dinner-units">Dinner Dose (Units)</label>
-                <input type="number" min="0" step="1" id="bolus-dinner-units" placeholder="e.g. 6" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                <div class="flex items-center space-x-1.5">
+                  <button type="button" onclick="stepInput('bolus-dinner-units', -2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&minus;</button>
+                  <div class="relative flex-1">
+                    <input type="number" min="0" step="2" id="bolus-dinner-units" placeholder="0" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white text-center focus:ring-1 focus:ring-amber-500 focus:outline-none font-bold">
+                    <span class="absolute right-2.5 top-2 text-[10px] text-slate-400 font-bold">U</span>
+                  </div>
+                  <button type="button" onclick="stepInput('bolus-dinner-units', 2)" class="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center shrink-0 select-none">&plus;</button>
+                </div>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1" for="bolus-dinner-notes">Pre-meal Target & Notes</label>
@@ -820,23 +899,10 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             </div>
           </div>
 
-          <!-- Urine Acetone & Point-of-Care RBG -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-urine-acetone">Urine Acetone Level</label>
-              <select id="patient-urine-acetone" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-teal-500 focus:outline-none">
-                <option value="Negative">Negative (Nil)</option>
-                <option value="Trace">Trace (+/-)</option>
-                <option value="+">+ (Small)</option>
-                <option value="++">++ (Moderate)</option>
-                <option value="+++">+++ (Large)</option>
-                <option value="++++">++++ (Very Large)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-current-rbg">Latest Fingerstick RBG (mg/dL)</label>
-              <input type="number" id="patient-current-rbg" placeholder="e.g. 240" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-teal-500 focus:outline-none">
-            </div>
+          <!-- Point-of-Care Fingerstick RBG -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-current-rbg">Latest Fingerstick RBG (mg/dL)</label>
+            <input type="number" id="patient-current-rbg" placeholder="e.g. 240" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-teal-500 focus:outline-none">
           </div>
 
           <!-- Drug Sheet Table -->
@@ -916,10 +982,19 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
         </div>
 
         <!-- Modal Footer Buttons -->
-        <div class="pt-3 flex items-center justify-between gap-3 border-t border-slate-200">
-          <button type="button" id="btn-discharge" class="px-3.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-lg text-xs font-bold transition hidden">
-            Discharge Patient
-          </button>
+        <div class="pt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200">
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="btn-print-patient" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold transition inline-flex items-center space-x-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+              <span>Print PDF / Handover</span>
+            </button>
+            <button type="button" id="btn-transfer-icu" class="px-3.5 py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300 rounded-lg text-xs font-bold transition hidden inline-flex items-center space-x-1">
+              <span>Transfer to ICU</span>
+            </button>
+            <button type="button" id="btn-discharge" class="px-3.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-lg text-xs font-bold transition hidden">
+              Discharge Patient
+            </button>
+          </div>
           <div class="flex items-center space-x-2 ml-auto">
             <button type="button" id="btn-cancel" class="px-3.5 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition">
               Cancel
@@ -1197,6 +1272,16 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
   <script>
     // --- HOSPITAL WARD TRACKER SCRIPT - HARDENED PRODUCTION IMPLEMENTATION ---
     // Institution: National Institute for Diabetes and Endocrinology (NIDE), Cairo, Egypt
+
+    window.stepInput = function(id, delta) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const current = parseFloat(el.value) || 0;
+      const next = Math.max(0, Math.round((current + delta) / 2) * 2);
+      el.value = next;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    };
     // Timezone: Africa/Cairo (UTC+3)
 
     // --- HTML SANITIZATION & DOM SAFETY UTILITIES ---
@@ -1284,7 +1369,30 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       projectId: "nide-ward-tracker"
     };
 
-    // Live Cloud Indicator: Flashes Red while Saving -> Solid Green when Saved -> Amber when Connecting
+    let offlineQueue = [];
+    try {
+      offlineQueue = JSON.parse(localStorage.getItem('ward_offline_queue_v4') || '[]');
+    } catch(e) { offlineQueue = []; }
+
+    function saveOfflineQueue() {
+      try {
+        localStorage.setItem('ward_offline_queue_v4', JSON.stringify(offlineQueue));
+      } catch(e) {}
+    }
+
+    function queueOfflineChange(action, bedId, payload) {
+      offlineQueue.push({
+        action,
+        bedId,
+        payload,
+        timestamp: new Date().toISOString()
+      });
+      saveOfflineQueue();
+      setCloudStatus('offline');
+      showToast("Saved locally (Offline). Changes queued to sync when signal returns.");
+    }
+
+    // Live Cloud Indicator: Flashes Red while Saving -> Solid Green when Saved -> Amber when Connecting -> Rose when Offline
     function setCloudStatus(status, detail = '') {
       currentCloudStatus = status;
       const dot = document.getElementById('cloud-status-dot');
@@ -1292,24 +1400,255 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       const btn = document.getElementById('btn-cloud-sync');
       if (!dot || !textEl || !btn) return;
 
+      const qLen = offlineQueue.length;
+
       if (status === 'saving') {
         dot.className = "w-2 h-2 rounded-full bg-rose-500 animate-ping";
         textEl.textContent = "Saving...";
         btn.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border transition bg-rose-950/80 text-rose-200 border-rose-800";
+      } else if (status === 'offline') {
+        dot.className = "w-2 h-2 rounded-full bg-rose-500 animate-pulse";
+        const timeStr = lastWriteAckTime || new Date().toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' });
+        textEl.textContent = `Offline • ${qLen > 0 ? qLen + ' queued' : 'Saved locally'} (${timeStr})`;
+        btn.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border transition bg-rose-950/80 text-rose-200 border-rose-800";
       } else if (status === 'connecting') {
         dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
-        textEl.textContent = "Connecting...";
+        textEl.textContent = qLen > 0 ? `Connecting • Syncing ${qLen} queued...` : "Connecting...";
         btn.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border transition bg-amber-950/80 text-amber-200 border-amber-800";
       } else {
         dot.className = "w-2 h-2 rounded-full bg-emerald-400";
         lastWriteAckTime = new Date().toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const providerLabel = currentCloudProvider === 'neon' ? 'Neon Postgres' : (currentCloudProvider === 'firebase' ? 'Firebase' : 'Local');
-        textEl.textContent = `Saved (${providerLabel} ${lastWriteAckTime})`;
+        textEl.textContent = `Online • Synced (${lastWriteAckTime})`;
         btn.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border transition bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700";
+      }
+
+      const mDot = document.getElementById('modal-status-dot');
+      const mTitle = document.getElementById('modal-status-title');
+      const mCount = document.getElementById('modal-queue-count');
+      const mLast = document.getElementById('modal-last-saved');
+      if (mDot && mTitle && mCount && mLast) {
+        mCount.textContent = `${qLen} updates queued`;
+        mLast.textContent = lastWriteAckTime || 'Recent';
+        if (status === 'offline') {
+          mDot.className = "w-2 h-2 rounded-full bg-rose-500 animate-pulse";
+          mTitle.textContent = "Offline (Weak / No Reception)";
+        } else if (status === 'connecting') {
+          mDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+          mTitle.textContent = "Connecting • Syncing Queue...";
+        } else {
+          mDot.className = "w-2 h-2 rounded-full bg-emerald-500";
+          mTitle.textContent = "Online • Connected & In Sync";
+        }
       }
     }
 
-    // --- SCHEMA VALIDATION FOR IMPORTED & CLOUD DATA ---
+    window.addEventListener('online', () => {
+      showToast("Connection restored. Uploading pending hospital records...");
+      flushOfflineQueueStandalone();
+    });
+    window.addEventListener('offline', () => {
+      showToast("Offline mode (Bad reception). Changes will be saved locally.");
+      setCloudStatus('offline');
+    });
+
+    async function flushOfflineQueueStandalone() {
+      if (!navigator.onLine || offlineQueue.length === 0) {
+        setCloudStatus('saved');
+        return;
+      }
+      setCloudStatus('connecting');
+      const itemsToSync = [...offlineQueue];
+      let syncedCount = 0;
+
+      for (const item of itemsToSync) {
+        try {
+          if (item.action === 'savePatient') {
+            await pushSinglePatientToCloud(item.bedId, item.payload);
+          } else if (item.action === 'discharge') {
+            await pushDischargeToCloud(item.bedId, item.payload);
+          } else if (item.action === 'saveShift') {
+            await pushShiftToCloud(item.payload);
+          }
+          offlineQueue = offlineQueue.filter(x => x !== item);
+          saveOfflineQueue();
+          syncedCount++;
+        } catch(err) {
+          console.warn("Queue replay interrupted by network drop:", err);
+          setCloudStatus('offline');
+          return;
+        }
+      }
+
+      setCloudStatus('saved');
+      if (syncedCount > 0) {
+        showToast(`✓ All ${syncedCount} queued updates synced to cloud.`);
+      }
+    }
+
+    async function pushSinglePatientToCloud(bedId, patientData) {
+      if (currentCloudProvider === 'neon') {
+        return await neonExecuteQuery('savePatient', { bedId, patientData, actor: currentStaff.name });
+      }
+      if (isCloudSyncActive && firebaseDatabaseRef) {
+        const updates = {};
+        updates[`patients/${bedId}`] = patientData;
+        updates['lastUpdatedAt'] = new Date().toISOString();
+        updates['lastUpdatedBy'] = currentStaff.name || shiftData.doc1;
+        updates['lastUpdatedRole'] = currentStaff.role;
+        return await firebaseDatabaseRef.update(updates);
+      }
+    }
+
+    async function pushDischargeToCloud(bedId, archivedRecord) {
+      if (currentCloudProvider === 'neon') {
+        return await neonExecuteQuery('discharge', { bedId, archivedRecord, actor: currentStaff.name });
+      }
+      if (isCloudSyncActive && firebaseDatabaseRef) {
+        const updates = {};
+        updates[`patients/${bedId}`] = null;
+        updates[`archive/${archivedRecord.archiveId}`] = archivedRecord;
+        updates['lastUpdatedAt'] = new Date().toISOString();
+        updates['lastUpdatedBy'] = currentStaff.name || shiftData.doc1;
+        return await firebaseDatabaseRef.update(updates);
+      }
+    }
+
+    async function pushShiftToCloud(newShiftData) {
+      if (currentCloudProvider === 'neon') {
+        return await neonExecuteQuery('saveShift', { shiftData: newShiftData, actor: currentStaff.name });
+      }
+      if (isCloudSyncActive && firebaseDatabaseRef) {
+        return await firebaseDatabaseRef.child('shiftData').set(newShiftData);
+      }
+    }
+
+    // Granular Write: Save or Update Single Patient Bed Record
+    function savePatientToCloud(bedId, patientData) {
+      if (isRemoteUpdateInProgress) return;
+      lastWriteAckTime = new Date().toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      // Local persistence immediately
+      try {
+        localStorage.setItem('ward_patients_v4', JSON.stringify(patients));
+      } catch(e) {}
+
+      if (!navigator.onLine) {
+        queueOfflineChange('savePatient', bedId, patientData);
+        return;
+      }
+
+      setCloudStatus('saving');
+
+      if (currentCloudProvider === 'neon') {
+        neonExecuteQuery('savePatient', { bedId, patientData, actor: currentStaff.name })
+          .then(() => setCloudStatus('saved'))
+          .catch((err) => {
+            console.warn("Neon write failed, saving offline:", err);
+            queueOfflineChange('savePatient', bedId, patientData);
+          });
+        return;
+      }
+
+      if (isCloudSyncActive && firebaseDatabaseRef) {
+        const updates = {};
+        updates[`patients/${bedId}`] = patientData;
+        updates['lastUpdatedAt'] = new Date().toISOString();
+        updates['lastUpdatedBy'] = currentStaff.name || shiftData.doc1;
+        updates['lastUpdatedRole'] = currentStaff.role;
+
+        firebaseDatabaseRef.update(updates).then(() => {
+          setCloudStatus('saved');
+        }).catch(err => {
+          console.warn("Firebase write failed, saving offline:", err);
+          queueOfflineChange('savePatient', bedId, patientData);
+        });
+      } else {
+        setTimeout(() => setCloudStatus('saved'), 300);
+      }
+    }
+
+    // Granular Write: Atomic Discharge & Medicolegal Archive Append
+    function dischargePatientToCloud(bedId, archivedRecord) {
+      if (isRemoteUpdateInProgress) return;
+      lastWriteAckTime = new Date().toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      try {
+        localStorage.setItem('ward_patients_v4', JSON.stringify(patients));
+        localStorage.setItem('ward_archive_v4', JSON.stringify(archivedPatients));
+      } catch(e) {}
+
+      if (!navigator.onLine) {
+        queueOfflineChange('discharge', bedId, archivedRecord);
+        return;
+      }
+
+      setCloudStatus('saving');
+
+      if (currentCloudProvider === 'neon') {
+        neonExecuteQuery('discharge', { bedId, archivedRecord, actor: currentStaff.name })
+          .then(() => setCloudStatus('saved'))
+          .catch((err) => {
+            console.warn("Neon discharge failed, saving offline:", err);
+            queueOfflineChange('discharge', bedId, archivedRecord);
+          });
+        return;
+      }
+
+      if (isCloudSyncActive && firebaseDatabaseRef) {
+        const updates = {};
+        updates[`patients/${bedId}`] = null;
+        updates[`archive/${archivedRecord.archiveId}`] = archivedRecord;
+        updates['lastUpdatedAt'] = new Date().toISOString();
+        updates['lastUpdatedBy'] = currentStaff.name || shiftData.doc1;
+
+        firebaseDatabaseRef.update(updates).then(() => {
+          setCloudStatus('saved');
+        }).catch(err => {
+          console.warn("Discharge write error, saving offline:", err);
+          queueOfflineChange('discharge', bedId, archivedRecord);
+        });
+      } else {
+        setTimeout(() => setCloudStatus('saved'), 300);
+      }
+    }
+
+    // Granular Write: Update Shift Handover Roster
+    function saveShiftToCloud(newShiftData) {
+      if (isRemoteUpdateInProgress) return;
+      lastWriteAckTime = new Date().toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      try {
+        localStorage.setItem('ward_shift_v4', JSON.stringify(newShiftData));
+      } catch(e) {}
+
+      if (!navigator.onLine) {
+        queueOfflineChange('saveShift', null, newShiftData);
+        return;
+      }
+
+      setCloudStatus('saving');
+
+      if (currentCloudProvider === 'neon') {
+        neonExecuteQuery('saveShift', { shiftData: newShiftData, actor: currentStaff.name })
+          .then(() => setCloudStatus('saved'))
+          .catch((err) => {
+            console.warn("Neon shift failed, saving offline:", err);
+            queueOfflineChange('saveShift', null, newShiftData);
+          });
+        return;
+      }
+
+      if (isCloudSyncActive && firebaseDatabaseRef) {
+        firebaseDatabaseRef.child('shiftData').set(newShiftData).then(() => {
+          setCloudStatus('saved');
+        }).catch(err => {
+          console.warn("Shift write error, saving offline:", err);
+          queueOfflineChange('saveShift', null, newShiftData);
+        });
+      } else {
+        setTimeout(() => setCloudStatus('saved'), 300);
+      }
+    }
     function validatePatientRecord(patient) {
       if (!patient || typeof patient !== 'object') return false;
       if (typeof patient.name !== 'string' || !patient.name.trim()) return false;
@@ -1468,101 +1807,7 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       }
     }
 
-    window.addEventListener('online', () => setCloudStatus('saved'));
-    window.addEventListener('offline', () => setCloudStatus('connecting'));
 
-    // Granular Write: Save or Update Single Patient Bed Record
-    function savePatientToCloud(bedId, patientData) {
-      if (isRemoteUpdateInProgress) return;
-      setCloudStatus('saving');
-
-      // Local persistence immediately
-      try {
-        localStorage.setItem('ward_patients_v4', JSON.stringify(patients));
-      } catch(e) {}
-
-      if (isCloudSyncActive && firebaseDatabaseRef) {
-        // Atomic patient-level update with write acknowledgement
-        const updates = {};
-        updates[`patients/${bedId}`] = patientData;
-        updates['lastUpdatedAt'] = new Date().toISOString();
-        updates['lastUpdatedBy'] = currentStaff.name || shiftData.doc1;
-        updates['lastUpdatedRole'] = currentStaff.role;
-
-        firebaseDatabaseRef.update(updates).then(() => {
-          setCloudStatus('saved');
-        }).catch(err => {
-          console.warn("Granular write error:", err);
-          setCloudStatus('connecting');
-        });
-      } else {
-        setTimeout(() => setCloudStatus('saved'), 300);
-      }
-    }
-
-    // Granular Write: Atomic Discharge & Medicolegal Archive Append
-    function dischargePatientToCloud(bedId, archivedRecord) {
-      if (isRemoteUpdateInProgress) return;
-      setCloudStatus('saving');
-
-      try {
-        localStorage.setItem('ward_patients_v4', JSON.stringify(patients));
-        localStorage.setItem('ward_archive_v4', JSON.stringify(archivedPatients));
-      } catch(e) {}
-
-      if (currentCloudProvider === 'neon') {
-        neonExecuteQuery('discharge', { bedId, archivedRecord, actor: currentStaff.name })
-          .then(() => setCloudStatus('saved'))
-          .catch(() => setCloudStatus('connecting'));
-        return;
-      }
-
-      if (isCloudSyncActive && firebaseDatabaseRef) {
-        // Atomic multi-path transaction: delete from active patients + append to permanent archive
-        const updates = {};
-        updates[`patients/${bedId}`] = null; // deletes bed atomically
-        updates[`archive/${archivedRecord.archiveId}`] = archivedRecord; // appends to archive
-        updates['lastUpdatedAt'] = new Date().toISOString();
-        updates['lastUpdatedBy'] = currentStaff.name || shiftData.doc1;
-
-        firebaseDatabaseRef.update(updates).then(() => {
-          setCloudStatus('saved');
-        }).catch(err => {
-          console.warn("Discharge write error:", err);
-          setCloudStatus('connecting');
-        });
-      } else {
-        setTimeout(() => setCloudStatus('saved'), 300);
-      }
-    }
-
-    // Granular Write: Update Shift Handover Roster
-    function saveShiftToCloud(newShiftData) {
-      if (isRemoteUpdateInProgress) return;
-      setCloudStatus('saving');
-
-      try {
-        localStorage.setItem('ward_shift_v4', JSON.stringify(newShiftData));
-      } catch(e) {}
-
-      if (currentCloudProvider === 'neon') {
-        neonExecuteQuery('saveShift', { shiftData: newShiftData, actor: currentStaff.name })
-          .then(() => setCloudStatus('saved'))
-          .catch(() => setCloudStatus('connecting'));
-        return;
-      }
-
-      if (isCloudSyncActive && firebaseDatabaseRef) {
-        firebaseDatabaseRef.child('shiftData').set(newShiftData).then(() => {
-          setCloudStatus('saved');
-        }).catch(err => {
-          console.warn("Shift write error:", err);
-          setCloudStatus('connecting');
-        });
-      } else {
-        setTimeout(() => setCloudStatus('saved'), 300);
-      }
-    }
 
     // Full state sync fallback (e.g. on manual backup restore)
     function pushStateToCloud() {
@@ -2227,10 +2472,6 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
 
           const basalUnits = (patient.insulinBasal && patient.insulinBasal.units !== undefined) ? `${patient.insulinBasal.units}U` : '--';
 
-          let abgBadge = abgStat.isDue 
-            ? `<span class="text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span><span>${escapeHTML(abgStat.text)}</span></span>`
-            : `<span class="text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span>${escapeHTML(abgStat.text)}</span></span>`;
-
           let q2hBadge = '';
           if (patient.insulinActrapidQ2H && patient.insulinActrapidQ2H.units) {
             q2hBadge = `<span class="font-semibold px-1.5 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200">Actrapid Q2H ${escapeHTML(String(patient.insulinActrapidQ2H.units))}U</span>`;
@@ -2265,7 +2506,6 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
               <p class="font-bold text-slate-900 text-sm tracking-tight truncate">${escapeHTML(patient.name)}</p>
               <div class="flex items-center justify-between text-[11px] text-slate-500 mt-0.5">
                 <span>${escapeHTML(String(patient.age))} yrs</span>
-                ${abgBadge}
               </div>
               <p class="text-xs text-slate-700 mt-1 line-clamp-1 font-medium">${escapeHTML(patient.diagnosis)}</p>
               ${abgSnippet}
@@ -2353,6 +2593,7 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
 
       const patient = patients[bedId];
       const dischargeBtn = document.getElementById('btn-discharge');
+      const icuBtn = document.getElementById('btn-transfer-icu');
       const saveBtn = document.getElementById('btn-save');
       const statusPill = document.getElementById('modal-patient-status');
       const printPatientBtn = document.getElementById('btn-print-patient');
@@ -2361,6 +2602,8 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
         statusPill.textContent = "Occupied";
         statusPill.className = "text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800";
         if (printPatientBtn) printPatientBtn.classList.remove('hidden');
+        if (icuBtn) icuBtn.classList.remove('hidden');
+        if (dischargeBtn) dischargeBtn.classList.remove('hidden');
 
         document.getElementById('patient-name').value = patient.name || '';
         document.getElementById('patient-age').value = patient.age || '';
@@ -2412,12 +2655,15 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
         document.getElementById('patient-followup-plan').value = patient.followupPlan || '';
 
         updateProtocolGuidance();
+        if (icuBtn) icuBtn.classList.remove('hidden');
         dischargeBtn.classList.remove('hidden');
         saveBtn.textContent = 'Save Admission';
       } else {
         statusPill.textContent = "Empty Bed";
         statusPill.className = "text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
         if (printPatientBtn) printPatientBtn.classList.add('hidden');
+        if (icuBtn) icuBtn.classList.add('hidden');
+        dischargeBtn.classList.add('hidden');
 
         document.getElementById('patient-form').reset();
         document.getElementById('form-bed-id').value = bedId;
@@ -2663,14 +2909,7 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
         return;
       }
 
-      const abgStat = calculateABGStatus({ abgList: activeModalABGList });
-      if (abgStat.isDue) {
-        duePill.textContent = `${abgStat.text} (OVERDUE)`;
-        duePill.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 animate-pulse";
-      } else {
-        duePill.textContent = abgStat.text;
-        duePill.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800";
-      }
+      if (duePill) duePill.style.display = 'none';
 
       activeModalABGList.forEach((entry, index) => {
         const tr = document.createElement('tr');
@@ -2901,6 +3140,158 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       if (e.target.id === 'media-lightbox-modal') {
         document.getElementById('media-lightbox-modal').classList.add('hidden');
       }
+    });
+
+    // --- TRANSFER TO ICU HANDLER ---
+    document.getElementById('btn-transfer-icu').addEventListener('click', () => {
+      const bedId = document.getElementById('form-bed-id').value;
+      const patient = patients[bedId];
+      if (!patient) return;
+
+      const reason = prompt(`Transfer ${patient.name} (${bedId}) to ICU due to clinical deterioration?\n\nEnter ICU clinical transfer reason:`, "Severe refractory metabolic acidosis / deterioration");
+      if (reason === null) return;
+
+      const nowCairo = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
+      const pad = (n) => n.toString().padStart(2, '0');
+      const dischargeTimestamp = `${nowCairo.getFullYear()}-${pad(nowCairo.getMonth()+1)}-${pad(nowCairo.getDate())} ${pad(nowCairo.getHours())}:${pad(nowCairo.getMinutes())}`;
+
+      const archivedRecord = {
+        archiveId: "ARCH-" + Date.now(),
+        bedId: bedId,
+        patient: JSON.parse(JSON.stringify(patient)),
+        dischargeTimestamp: dischargeTimestamp,
+        dischargedBy: currentAttendingStaff.name,
+        dischargeOutcome: "Transferred to ICU / Critical Care",
+        dischargeNotes: reason.trim() || "Transferred to ICU due to clinical deterioration"
+      };
+
+      archivedPatients.unshift(archivedRecord);
+      delete patients[bedId];
+
+      saveLocalData();
+      savePatientToCloud(bedId, null);
+      saveArchiveToCloud();
+      closeModal();
+      renderTabs();
+      showToast(`Transferred ${patient.name} to ICU (Bed ${bedId} now available)`);
+    });
+
+    // --- PRINT / PDF HANDOVER REPORT ---
+    function openPatientPrintView(patient, bedId) {
+      const printWin = window.open('', '_blank');
+      if (!printWin) {
+        window.print();
+        return;
+      }
+      const abgRows = (patient.abgList || []).map(r => `
+        <tr>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(r.timestamp || '--')}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px;"><b>${escapeHTML(String(r.ph ?? '--'))}</b></td>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(String(r.pco2 ?? '--'))}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(String(r.hco3 ?? '--'))}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(String(r.rbg ?? '--'))}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(String(r.k ?? '--'))}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(String(r.na ?? '--'))}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(String(r.cl ?? '--'))}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(String(r.hb ?? '--'))}</td>
+        </tr>
+      `).join('');
+
+      const drugRows = (patient.drugList || []).map(d => `
+        <tr>
+          <td style="border:1px solid #cbd5e1;padding:6px;"><b>${escapeHTML(d.name || '--')}</b></td>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(d.dose || '--')}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px;">${escapeHTML(d.freq || '--')}</td>
+        </tr>
+      `).join('');
+
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Clinical Handover Report - ${escapeHTML(patient.name)}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; color: #1e293b; padding: 20px; line-height: 1.5; }
+            h1 { font-size: 18px; margin: 0 0 4px 0; color: #0f172a; }
+            h2 { font-size: 14px; margin: 16px 0 6px 0; padding-bottom: 4px; border-bottom: 2px solid #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }
+            th { border: 1px solid #cbd5e1; background: #f8fafc; padding: 6px; text-align: left; }
+            .box { border: 1px solid #cbd5e1; background: #f8fafc; padding: 10px; border-radius: 6px; margin-top: 6px; }
+            .header-bar { border-bottom: 2px solid #0f172a; padding-bottom: 10px; display: flex; justify-content: space-between; }
+            @media print { button { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div style="margin-bottom:12px;">
+            <button onclick="window.print()" style="padding:6px 14px;background:#0f766e;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Print / Save as PDF</button>
+          </div>
+          <div class="header-bar">
+            <div>
+              <h1>National Institute for Diabetes and Endocrinology (NIDE)</h1>
+              <p style="margin:0;color:#64748b;">Inpatient Ward Clinical Handover & Patient Summary</p>
+            </div>
+            <div style="text-align:right;font-size:11px;color:#64748b;">
+              <div><b>Bed:</b> ${escapeHTML(bedId)}</div>
+              <div><b>Printed:</b> ${new Date().toLocaleString("en-US", { timeZone: "Africa/Cairo" })} (Cairo)</div>
+              <div><b>Attending:</b> ${escapeHTML(currentAttendingStaff.name)}</div>
+            </div>
+          </div>
+
+          <h2>Patient Demographics & Admission</h2>
+          <div class="box">
+            <div><b>Name:</b> ${escapeHTML(patient.name)} | <b>Age:</b> ${escapeHTML(String(patient.age))} yrs | <b>Admitted:</b> ${escapeHTML(patient.admissionDate || '--')}</div>
+            <div><b>Primary Diagnosis:</b> ${escapeHTML(patient.diagnosis || 'None recorded')}</div>
+            <div><b>Precipitating Triggers:</b> ${escapeHTML(patient.riskFactors || 'None recorded')}</div>
+            <div><b>Urine Acetone:</b> ${escapeHTML(patient.urineAcetone || 'Negative')} | <b>Fingerstick RBG:</b> ${escapeHTML(String(patient.currentRBG || '--'))} mg/dL</div>
+          </div>
+
+          <h2>Insulin Protocol</h2>
+          <div class="box">
+            <div><b>Lantus (Basal Glargine at 11:00 PM):</b> ${patient.insulinBasal?.units ? escapeHTML(String(patient.insulinBasal.units)) + ' Units' : 'None'}</div>
+            <div><b>Actrapid Every 2 Hours (Q2H):</b> ${patient.insulinActrapidQ2H?.units ? escapeHTML(String(patient.insulinActrapidQ2H.units)) + ' Units (' + escapeHTML(patient.insulinActrapidQ2H.notes || 'Q2H IM/SC') + ')' : 'None'}</div>
+            <div><b>Actrapid Meal Boluses:</b> Breakfast: ${patient.bolusRegimen?.breakfast?.units || 0}U | Lunch: ${patient.bolusRegimen?.lunch?.units || 0}U | Dinner: ${patient.bolusRegimen?.dinner?.units || 0}U</div>
+          </div>
+
+          <h2>Serial Blood Gases (Flowsheet)</h2>
+          <table>
+            <thead>
+              <tr><th>Timestamp</th><th>pH</th><th>pCO2</th><th>HCO3</th><th>RBG</th><th>K+</th><th>Na+</th><th>Cl-</th><th>Hb</th></tr>
+            </thead>
+            <tbody>
+              ${abgRows || '<tr><td colspan="9">No blood gas records logged.</td></tr>'}
+            </tbody>
+          </table>
+
+          <h2>Inpatient Drug Sheet</h2>
+          <table>
+            <thead>
+              <tr><th>Medication</th><th>Dose</th><th>Frequency</th></tr>
+            </thead>
+            <tbody>
+              ${drugRows || '<tr><td colspan="3">No medications recorded.</td></tr>'}
+            </tbody>
+          </table>
+
+          <h2>Workup, Plan & Consults</h2>
+          <div class="box">
+            <div><b>Plan & Follow-up:</b> ${escapeHTML(patient.followupPlan || 'None recorded')}</div>
+            <div style="margin-top:4px;"><b>Labs & Imaging:</b> ${escapeHTML(patient.labsImaging || 'None recorded')}</div>
+            <div style="margin-top:4px;"><b>Specialist Consultations:</b> ${escapeHTML(patient.consultations || 'None recorded')}</div>
+          </div>
+          <script>
+            setTimeout(() => { window.print(); }, 400);
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+    }
+
+    document.getElementById('btn-print-patient').addEventListener('click', () => {
+      const bedId = document.getElementById('form-bed-id').value;
+      const patient = patients[bedId];
+      if (!patient) return;
+      openPatientPrintView(patient, bedId);
     });
 
     // --- DISCHARGE CONFIRMATION & MEDICOLEGAL ARCHIVE ---
@@ -3367,11 +3758,59 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       });
     });
 
+    // --- THEME TOGGLE (LIGHT / DARK ONLY) ---
+    const themeBtn = document.getElementById('btn-theme-toggle');
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.toggle('dark');
+        document.body.classList.toggle('bg-slate-900', isDark);
+        document.body.classList.toggle('text-slate-100', isDark);
+        document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem('nide-theme', isDark ? 'dark' : 'light');
+      });
+      if (localStorage.getItem('nide-theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('bg-slate-900', 'text-slate-100');
+        const icon = document.getElementById('theme-icon');
+        if (icon) icon.textContent = '☀️';
+      }
+    }
+
     // --- SHIFT ROSTER MODAL ---
+    function populateShiftDropdowns() {
+      const docList = [
+        "Dr. Ahmed Taha (Resident)",
+        "Dr. Omnia Khedr (Resident)",
+        "Dr. Tareq Abdelkhalek (Resident)",
+        "Dr. Mona Youssef (Resident)",
+        "Dr. Mahmoud Hassan (Fellow)",
+        "Dr. Sarah Mostafa (Resident)"
+      ];
+      const attList = [
+        "Dr. Hossam (Attending)",
+        "Prof. Khaled Fawzy (Consultant)",
+        "Dr. Sherif Hafez (Attending)",
+        "Prof. Inas Shaltout (Consultant)"
+      ];
+
+      const sel1 = document.getElementById('shift-doc-1');
+      const sel2 = document.getElementById('shift-doc-2');
+      const selAtt = document.getElementById('shift-attending');
+
+      sel1.innerHTML = docList.map(d => `<option value="${d}">${d}</option>`).join('');
+      sel2.innerHTML = '<option value="">-- None (Sole Doctor on Duty) --</option>' + docList.map(d => `<option value="${d}">${d}</option>`).join('');
+      selAtt.innerHTML = attList.map(a => `<option value="${a}">${a}</option>`).join('');
+
+      if (shiftData.doc1 && !docList.includes(shiftData.doc1)) sel1.innerHTML += `<option value="${shiftData.doc1}">${shiftData.doc1} (current)</option>`;
+      if (shiftData.doc2 && !docList.includes(shiftData.doc2)) sel2.innerHTML += `<option value="${shiftData.doc2}">${shiftData.doc2} (current)</option>`;
+      if (shiftData.attending && !attList.includes(shiftData.attending)) selAtt.innerHTML += `<option value="${shiftData.attending}">${shiftData.attending} (current)</option>`;
+    }
+
     document.getElementById('btn-edit-shift').addEventListener('click', () => {
-      document.getElementById('shift-doc-1').value = shiftData.doc1;
-      document.getElementById('shift-doc-2').value = shiftData.doc2 || '';
-      document.getElementById('shift-attending').value = shiftData.attending;
+      populateShiftDropdowns();
+      if (shiftData.doc1) document.getElementById('shift-doc-1').value = shiftData.doc1;
+      if (shiftData.doc2) document.getElementById('shift-doc-2').value = shiftData.doc2;
+      if (shiftData.attending) document.getElementById('shift-attending').value = shiftData.attending;
       document.getElementById('shift-modal').classList.remove('hidden');
     });
 
@@ -3786,6 +4225,89 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       const clean = text.replace(/,/g, '.');
       const results = {};
 
+      // 1. Line-by-line structured analysis for GEM 3000, Radiometer, Cobas printout slips
+      const lines = clean.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      for (const line of lines) {
+        if (results.ph === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*p?[Hh]\b[^\d]{0,8}([67]\.\d{1,3})/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 6.5 && v <= 7.9) results.ph = v;
+          }
+        }
+        if (results.pco2 === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*p?[Cck][O0o][2zZ]\b[^\d]{0,8}(\d{1,3}(?:\.\d)?)/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 10 && v <= 150) results.pco2 = v;
+          }
+        }
+        if (results.po2 === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*p?[O0o][2zZ]\b[^\d]{0,8}(\d{1,3}(?:\.\d)?)/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 15 && v <= 500) results.po2 = v;
+          }
+        }
+        if (results.na === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*c?Na[\+\*t]?\b[^\d]{0,8}(\d{2,3}(?:\.\d)?)/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 100 && v <= 190) results.na = v;
+          }
+        }
+        if (results.k === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*c?K[\+\*t]?\b[^\d]{0,8}([1-9](?:\.\d{1,2})?)/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 1.0 && v <= 10.0) results.k = v;
+          }
+        }
+        if (results.ca === undefined && !line.includes("(7.4)")) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*c?Ca(?:\+\+|2\+|\+)?\b[^\d]{0,8}([0-4]\.\d{1,2})/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 0.3 && v <= 3.8) results.ca = v;
+          }
+        }
+        if (results.rbg === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*(?:c?Glu(?:cose)?|RBG|BG)\b[^\d]{0,8}(\d{2,4}(?:\.\d)?)/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 20 && v <= 1200) results.rbg = v;
+          }
+        }
+        if (results.cl === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*c?C[lI1][\-_]?\b[^\d]{0,8}(\d{2,3}(?:\.\d)?)/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 60 && v <= 150) results.cl = v;
+          }
+        }
+        if (results.hco3std === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*(?:c?H[C\(][O0o]3?[\-_]?(?:\([^)]*st[^)]*\)|std|st)|SBC)\b[^\d]{0,8}(\d{1,2}(?:\.\d)?)/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 5 && v <= 50) results.hco3std = v;
+          }
+        }
+        if (results.hco3 === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*(?:c?H[C\(][O0o]3?[\-_]?(?!\w*std)(?:\(P\)|act)?|Bicarb(?:onate)?)\b[^\d]{0,8}(\d{1,2}(?:\.\d)?)/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 2 && v <= 55) results.hco3 = v;
+          }
+        }
+        if (results.hb === undefined) {
+          const m = line.match(/^[>\)\]\|I!l1\s]*(?:THbc|c?t?H[bg]c?|Hgb|Hemoglobin)\b[^\d]{0,8}(\d{1,2}(?:\.\d)?)/i);
+          if (m) {
+            const v = parseFloat(m[1]);
+            if (!isNaN(v) && v >= 3.0 && v <= 25.0) results.hb = v;
+          }
+        }
+      }
+
+      // 2. Global regex fallback for unformatted / wrapped OCR text
       function extractValue(patterns, min, max) {
         for (const pat of patterns) {
           const m = clean.match(pat);
@@ -3799,85 +4321,77 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
         return undefined;
       }
 
-      // 1. pH (Range: 6.5 - 7.9)
-      const phVal = extractValue([
-        /\b(?:p[Hh]|PH)\s*[:=]?\s*([67]\.\d{1,3})\b/i,
-        /\b(?:p[Hh]|PH)[^\d\n\r]{0,12}([67]\.\d{1,3})\b/i,
-        /\b([67]\.\d{2,3})\b/
-      ], 6.5, 7.9);
-      if (phVal !== undefined) results.ph = phVal;
+      if (results.ph === undefined) {
+        results.ph = extractValue([
+          /(?:^|[\s\r\n])[>\)\]\|I!l1\s]*p?[Hh]\b\s*[:=]?\s*([67]\.\d{1,3})/i,
+          /\b(?:p[Hh]|PH)\s*[:=]?\s*([67]\.\d{1,3})\b/i,
+          /\b([67]\.\d{2,3})\b/
+        ], 6.5, 7.9);
+      }
+      if (results.pco2 === undefined) {
+        results.pco2 = extractValue([
+          /(?:^|[\s\r\n])[>\)\]\|I!l1\s]*p?[Cck][O0o][2zZ]\b[^\d\n\r]{0,15}?(\d{1,3}(?:\.\d)?)/i,
+          /\b(?:p[Cck][O0o][2zZ]|pco2)[^\d\n\r]{0,15}?(\d{1,3}(?:\.\d)?)\b/i,
+          /\b(?:pCO2|PCO2)\b[^\d]{0,20}(\d{1,3}(?:\.\d)?)/i
+        ], 10, 150);
+      }
+      if (results.po2 === undefined) {
+        results.po2 = extractValue([
+          /(?:^|[\s\r\n])[>\)\]\|I!l1\s]*p?[O0o][2zZ]\b[^\d\n\r]{0,15}?(\d{1,3}(?:\.\d)?)/i,
+          /\b(?:p[O0o][2zZ]|po2)[^\d\n\r]{0,15}?(\d{1,3}(?:\.\d)?)\b/i,
+          /\b(?:pO2|PO2)\b[^\d]{0,20}(\d{1,3}(?:\.\d)?)/i
+        ], 15, 500);
+      }
+      if (results.hco3std === undefined) {
+        results.hco3std = extractValue([
+          /\b(?:c?H[C\(][O0o]3?[\-_]?(?:\([^)]*st[^)]*\)|std|st)|SBC)[^\d\n\r]{0,15}?(\d{1,2}(?:\.\d)?)\b/i,
+          /\b(?:HCO3std|HCO3\(st\)|SBC)[^\d]{0,15}?(\d{1,2}(?:\.\d)?)/i
+        ], 5, 50);
+      }
+      if (results.hco3 === undefined) {
+        results.hco3 = extractValue([
+          /(?:^|[\s\r\n])(?:c?H[C\(][O0o]3?[\-_]?(?!\w*std)(?:\(P\)|act)?|Bicarb(?:onate)?)[^\d\n\r]{0,15}?(\d{1,2}(?:\.\d)?)/i,
+          /\b(?:c?HCO3[\-_]?|HC03[\-_]?)[^\d]{0,15}?(\d{1,2}(?:\.\d)?)/i
+        ], 2, 55);
+      }
+      if (results.na === undefined) {
+        results.na = extractValue([
+          /(?:^|[\s\r\n])(?:c?Na[\+\*t]?|Sodium)[^\d\n\r]{0,15}?(\d{2,3}(?:\.\d)?)/i,
+          /\b(?:c?Na\+?|Sodium)\s*[:=]?\s*(\d{2,3}(?:\.\d)?)/i
+        ], 100, 190);
+      }
+      if (results.k === undefined) {
+        results.k = extractValue([
+          /(?:^|[\s\r\n])(?:c?K[\+\*t]?|Potassium)[^\d\n\r]{0,15}?([1-9](?:\.\d{1,2})?)/i,
+          /\b(?:c?K\+?|Potassium)\s*[:=]?\s*([1-9](?:\.\d{1,2})?)/i
+        ], 1.0, 10.0);
+      }
+      if (results.cl === undefined) {
+        results.cl = extractValue([
+          /(?:^|[\s\r\n])(?:c?C[lI1][\-_]?|Chloride)[^\d\n\r]{0,15}?(\d{2,3}(?:\.\d)?)/i,
+          /\b(?:c?Cl[\-_]?|Chloride)\s*[:=]?\s*(\d{2,3}(?:\.\d)?)/i
+        ], 60, 150);
+      }
+      if (results.ca === undefined) {
+        results.ca = extractValue([
+          /(?:^|[\s\r\n])(?:c?Ca(?:\+\+|2\+|\+)?|iCa|Calcium)[^\d\n\r]{0,15}?([0-3]\.\d{1,2})/i
+        ], 0.3, 3.8);
+      }
+      if (results.rbg === undefined) {
+        results.rbg = extractValue([
+          /(?:^|[\s\r\n])(?:c?Glu(?:cose)?|RBG|BG)[^\d\n\r]{0,15}?(\d{2,4}(?:\.\d)?)/i,
+          /\b(?:cGlu|Glu|Glucose|RBG)\s*[:=]?\s*(\d{2,4})/i
+        ], 20, 1200);
+      }
+      if (results.hb === undefined) {
+        results.hb = extractValue([
+          /(?:^|[\s\r\n])(?:THbc|c?t?H[bg]c?|Hgb|Hemoglobin)[^\d\n\r]{0,15}?(\d{1,2}(?:\.\d)?)/i,
+          /\b(?:ctHb|tHb|Hb|Hgb|THbc)\s*[:=]?\s*(\d{1,2}(?:\.\d)?)/i
+        ], 3.0, 25.0);
+      }
 
-      // 2. pCO2 (Range: 10 - 150) - handles pCO2, pC02, pcO2, pCOz, PCO2
-      const pco2Val = extractValue([
-        /\b(?:p[Cck][O0o][2zZ]|pco2)[^\d\n\r]{0,15}?(\d{1,3}(?:\.\d)?)\b/i,
-        /(?:pCO2|pC02|pco2)\s*[:=]?\s*(\d{1,3}(?:\.\d)?)/i,
-        /\b(?:pCO2|PCO2)\b[^\d]{0,20}(\d{1,3}(?:\.\d)?)/i
-      ], 10, 150);
-      if (pco2Val !== undefined) results.pco2 = pco2Val;
-
-      // 3. pO2 (Range: 15 - 500) - handles pO2, p02, pOz, PO2
-      const po2Val = extractValue([
-        /\b(?:p[O0o][2zZ]|po2)[^\d\n\r]{0,15}?(\d{1,3}(?:\.\d)?)\b/i,
-        /(?:pO2|p02|po2)\s*[:=]?\s*(\d{1,3}(?:\.\d)?)/i,
-        /\b(?:pO2|PO2)\b[^\d]{0,20}(\d{1,3}(?:\.\d)?)/i
-      ], 15, 500);
-      if (po2Val !== undefined) results.po2 = po2Val;
-
-      // 4. Standard Bicarb SBC / HCO3(st) (Range: 5 - 50)
-      const hco3stdVal = extractValue([
-        /\b(?:c?H[C\(][O0o]3?[\-_]?(?:\([^)]*st[^)]*\)|std|st)|SBC)[^\d\n\r]{0,15}?(\d{1,2}(?:\.\d)?)\b/i,
-        /\b(?:HCO3std|HCO3\(st\)|SBC)[^\d]{0,15}?(\d{1,2}(?:\.\d)?)/i
-      ], 5, 50);
-      if (hco3stdVal !== undefined) results.hco3std = hco3stdVal;
-
-      // 5. Actual Bicarbonate HCO3 / cHCO3-(P) (Range: 2 - 55)
-      const hco3Val = extractValue([
-        /\b(?:c?H[C\(][O0o]3?[\-_]?(?:\(P\)|act)?|Bicarb(?:onate)?)[^\d\n\r]{0,15}?(\d{1,2}(?:\.\d)?)\b/i,
-        /\b(?:c?HCO3|HC03|HCO3-)[^\d]{0,15}?(\d{1,2}(?:\.\d)?)/i,
-        /(?:HCO3|HC03)\s*[:=]?\s*(\d{1,2}(?:\.\d)?)/i
-      ], 2, 55);
-      if (hco3Val !== undefined) results.hco3 = hco3Val;
-
-      // 6. Sodium Na / cNa+ (Range: 100 - 190)
-      const naVal = extractValue([
-        /\b(?:c?Na[\+\*t]?|Sodium)[^\d\n\r]{0,15}?(\d{2,3}(?:\.\d)?)\b/i,
-        /\b(?:c?Na\+?|Sodium)\s*[:=]?\s*(\d{2,3}(?:\.\d)?)/i
-      ], 100, 190);
-      if (naVal !== undefined) results.na = naVal;
-
-      // 7. Potassium K / cK+ (Range: 1.0 - 10.0)
-      const kVal = extractValue([
-        /\b(?:c?K[\+\*t]?|Potassium)[^\d\n\r]{0,15}?([1-9](?:\.\d{1,2})?)\b/i,
-        /\b(?:c?K\+?|Potassium)\s*[:=]?\s*([1-9](?:\.\d{1,2})?)/i
-      ], 1.0, 10.0);
-      if (kVal !== undefined) results.k = kVal;
-
-      // 8. Chloride Cl / cCl- (Range: 60 - 150)
-      const clVal = extractValue([
-        /\b(?:c?C[lI1][\-_]?|Chloride)[^\d\n\r]{0,15}?(\d{2,3}(?:\.\d)?)\b/i,
-        /\b(?:c?Cl[\-_]?|Chloride)\s*[:=]?\s*(\d{2,3}(?:\.\d)?)/i
-      ], 60, 150);
-      if (clVal !== undefined) results.cl = clVal;
-
-      // 9. Calcium Ca / cCa2+ / iCa (Range: 0.3 - 3.5)
-      const caVal = extractValue([
-        /\b(?:c?Ca(?:2\+|\+{1,2}|t)?|iCa|Calcium)[^\d\n\r]{0,15}?([0-3]\.\d{1,2})\b/i,
-        /\b(?:c?Ca|iCa)\s*[:=]?\s*([0-3]\.\d{1,2})/i
-      ], 0.3, 3.5);
-      if (caVal !== undefined) results.ca = caVal;
-
-      // 10. Glucose / RBG (Range: 20 - 1200)
-      const rbgVal = extractValue([
-        /\b(?:c?Glu(?:cose)?|RBG|BG)[^\d\n\r]{0,15}?(\d{2,4}(?:\.\d)?)\b/i,
-        /\b(?:cGlu|Glu|Glucose|RBG)\s*[:=]?\s*(\d{2,4})/i
-      ], 20, 1200);
-      if (rbgVal !== undefined) results.rbg = rbgVal;
-
-      // 11. Hemoglobin Hb / ctHb (Range: 3.0 - 25.0)
-      const hbVal = extractValue([
-        /\b(?:c?t?H[bg]|Hgb|Hemoglobin)[^\d\n\r]{0,15}?(\d{1,2}(?:\.\d)?)\b/i,
-        /\b(?:ctHb|tHb|Hb|Hgb)\s*[:=]?\s*(\d{1,2}(?:\.\d)?)/i
-      ], 3.0, 25.0);
+      return results;
+    }
       if (hbVal !== undefined) results.hb = hbVal;
 
       return results;

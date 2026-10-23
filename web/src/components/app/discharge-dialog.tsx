@@ -46,15 +46,21 @@ export function DischargeDialog({ patientName, bedName }: { patientName: string;
             tone="danger"
             label="Hold to discharge"
             confirmedLabel="Discharged"
-            onConfirm={() =>
+            onConfirm={() => {
+              const disPayload = { admissionId: chart.admissionId, version: chart.version, outcome, notes };
               void run(
-                () => dischargePatient({ admissionId: chart.admissionId, version: chart.version, outcome, notes }),
+                () => dischargePatient(disPayload),
                 () => {
                   toast(`Discharged ${who}`, "Preserved in the archive");
                   router.push("/");
                 },
-              )
-            }
+                {
+                  type: "dischargePatient",
+                  payload: disPayload,
+                  description: `Discharge ${who}`,
+                },
+              );
+            }}
           />
           <DialogClose asChild>
             <Button variant="ghost">Cancel</Button>

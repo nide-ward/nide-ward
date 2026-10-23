@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { setTheme } from "@/server/actions/preferences";
 import type { Theme } from "@/lib/theme";
 import { useToast } from "./toast-provider";
@@ -10,14 +10,13 @@ import { useToast } from "./toast-provider";
 const OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
 ];
 
 /** Applies a theme to the page straight away; the saved preference then renders it server-side. */
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.setAttribute("data-theme-pref", theme);
-  const dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const dark = theme === "dark";
   root.setAttribute("data-theme", dark ? "dark" : "light");
 }
 

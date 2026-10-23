@@ -3,8 +3,11 @@
 import { useMemo, useState } from "react";
 import Button from "@/components/arc/button/button";
 import { Input } from "@/components/arc/input/input";
+import { Select } from "@/components/arc/select/select";
 import { Textarea } from "@/components/arc/textarea/textarea";
 import { addAbgReading, deleteAbgReading } from "@/server/actions/abg";
+import { recordBedside } from "@/server/actions/patients";
+import { ACETONE_HUE } from "@/lib/hues";
 import {
   abgWarnings,
   analyzeABG,
@@ -134,29 +137,35 @@ function EntryForm() {
         e.preventDefault();
         const when = fromCairoInputValue(takenAt);
         const n = (k: FieldKey) => parseMeasurement(vals[k]);
+        const abgPayload = {
+          admissionId: chart.admissionId,
+          takenAt: when ? when.toISOString() : "",
+          ph: n("ph"),
+          pco2: n("pco2"),
+          po2: n("po2"),
+          hco3: n("hco3"),
+          hco3Std: n("hco3Std"),
+          na: n("na"),
+          k: n("k"),
+          cl: n("cl"),
+          ca: n("ca"),
+          rbg: n("rbg"),
+          hb: n("hb"),
+        };
         void run(
-          () =>
-            addAbgReading({
-              admissionId: chart.admissionId,
-              takenAt: when ? when.toISOString() : "",
-              ph: n("ph"),
-              pco2: n("pco2"),
-              po2: n("po2"),
-              hco3: n("hco3"),
-              hco3Std: n("hco3Std"),
-              na: n("na"),
-              k: n("k"),
-              cl: n("cl"),
-              ca: n("ca"),
-              rbg: n("rbg"),
-              hb: n("hb"),
-            }),
+          () => addAbgReading(abgPayload),
           () => {
             setVals(EMPTY);
             setSlip("");
             setSlipMsg(null);
             setTakenAt(nowCairoValue());
             toast("Blood gas logged");
+          },
+          {
+            type: "addAbgReading",
+            payload: abgPayload,
+            description: `Log ABG (pH ${abgPayload.ph})`,
+            optimisticResult: { id: `offline-${Date.now()}` },
           },
         );
       }}
@@ -238,7 +247,16 @@ function ReadingsTable({ rows }: { rows: AbgRowData[] }) {
   if (rows.length === 0) return <p className="text-sm text-text-secondary">No blood gas records logged yet.</p>;
   const onDelete = (r: AbgRowData) => {
     if (window.confirm("Delete this reading? It stays in the audit log.")) {
-      void run(() => deleteAbgReading({ admissionId: chart.admissionId, abgId: r.id }));
+      const delPayload = { admissionId: chart.admissionId, abgId: r.id };
+      void run(
+        () => deleteAbgReading(delPayload),
+        undefined,
+        {
+          type: "deleteAbgReading",
+          payload: delPayload,
+          description: "Delete blood gas reading",
+        },
+      );
     }
   };
   return (
@@ -354,11 +372,75 @@ function ReadingsTable({ rows }: { rows: AbgRowData[] }) {
   );
 }
 
-export function AbgSection({ rows, nowIso }: { rows: AbgRowData[]; nowIso: string }) {
+const ACETONE_OPTIONS = [
+  { value: "Negative", label: "Negative (nil)" },
+  { value: "Trace", label: "Trace (+/-)" },
+  { value: "+", label: "+ (small)" },
+  { value: "++", label: "++ (moderate)" },
+  { value: "+++", label: "+++ (large)" },
+  { value: "++++", label: "++++ (very large)" },
+];
+
+function AcetoneCard({ initialAcetone = "Negative", currentRbg = null }: { initialAcetone?: string; currentRbg?: number | null }) {
+  const chart = useChart();
+  const { run, pending, error } = useAction();
+  const { toast } = useToast();
+  const [acetone, setAcetone] = useState<string>(initialAcetone);
+  const allowed = chart.allowed("bedside.record");
+
+  return (
+    <Panel
+      hue="sky"
+      title="Urine Acetone"
+      description="Serial bedside urine acetone evaluation."
+      action={<Pill hue={ACETONE_HUE[acetone]}>Acetone: {acetone}</Pill>}
+    >
+      <form
+        className="flex flex-wrap items-end gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const bedsidePayload = { admissionId: chart.admissionId, urineAcetone: acetone, currentRbg };
+          void run(
+            () => recordBedside(bedsidePayload),
+            () => toast("Urine acetone updated"),
+            {
+              type: "recordBedside",
+              payload: bedsidePayload,
+              description: `Set urine acetone to ${acetone}`,
+            },
+          );
+        }}
+      >
+        <div className="w-64">
+          <Select label="Urine acetone level" options={ACETONE_OPTIONS} value={acetone} onValueChange={setAcetone} disabled={!allowed} />
+        </div>
+        {allowed && (
+          <Button type="submit" loading={pending} size="sm">
+            Save Acetone
+          </Button>
+        )}
+        <InlineError>{error}</InlineError>
+      </form>
+    </Panel>
+  );
+}
+
+export function AbgSection({
+  rows,
+  nowIso,
+  initialAcetone = "Negative",
+  currentRbg = null,
+}: {
+  rows: AbgRowData[];
+  nowIso: string;
+  initialAcetone?: string;
+  currentRbg?: number | null;
+}) {
   const chart = useChart();
   const latest = rows.length ? rows[rows.length - 1] : null;
   return (
     <div className="grid gap-4">
+      <AcetoneCard initialAcetone={initialAcetone} currentRbg={currentRbg} />
       {chart.allowed("abg.record") && (
         <Panel hue="sky" title="Log a reading" description="Scheduled draws are 03:00, 07:00, 11:00, 15:00, 19:00 and 23:00.">
           <EntryForm />
@@ -367,17 +449,7 @@ export function AbgSection({ rows, nowIso }: { rows: AbgRowData[]; nowIso: strin
       <Panel hue="sky" title={`Blood gas log (${rows.length})`}>
         <ReadingsTable rows={rows} />
       </Panel>
-      <Panel
-        hue="sky"
-        title="Acid-Base Interpretation & Winter's Formula"
-        action={
-          rows.length === 0 ? (
-            <Pill>Next: on intake</Pill>
-          ) : (
-            <AbgDueBadge lastTakenAt={latest ? latest.takenAt : null} nowIso={nowIso} />
-          )
-        }
-      >
+      <Panel hue="sky" title="Acid-Base Interpretation & Winter's Formula">
         <Interpretation latest={latest} />
       </Panel>
     </div>

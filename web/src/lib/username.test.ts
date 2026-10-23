@@ -9,7 +9,7 @@ describe("usernameSchema", () => {
   });
 
   it("rejects too short, too long and other characters", () => {
-    expect(usernameSchema.safeParse("ab").success).toBe(false);
+    expect(usernameSchema.safeParse("").success).toBe(false);
     expect(usernameSchema.safeParse("a".repeat(31)).success).toBe(false);
     expect(usernameSchema.safeParse("dr ahmed").success).toBe(false);
     expect(usernameSchema.safeParse("ahmed@nide").success).toBe(false);

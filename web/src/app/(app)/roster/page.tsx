@@ -2,13 +2,13 @@ import { RosterForm } from "@/components/app/roster-form";
 import { Panel } from "@/components/app/ui";
 import { requireStaff } from "@/lib/session";
 import { formatCairo } from "@/lib/time";
-import { getRoster } from "@/server/queries";
+import { getRoster, listStaff } from "@/server/queries";
 
 export const metadata = { title: "Shift roster" };
 export const dynamic = "force-dynamic";
 
 export default async function RosterPage() {
-  const [, r] = await Promise.all([requireStaff("roster.edit"), getRoster()]);
+  const [, r, staffList] = await Promise.all([requireStaff("roster.edit"), getRoster(), listStaff()]);
   return (
     <div className="mx-auto grid max-w-2xl gap-4">
       <div>
@@ -19,7 +19,10 @@ export default async function RosterPage() {
         </p>
       </div>
       <Panel>
-        <RosterForm initial={{ doc1: r?.doc1 ?? "", doc2: r?.doc2 ?? "", attending: r?.attending ?? "" }} />
+        <RosterForm
+          initial={{ doc1: r?.doc1 ?? "", doc2: r?.doc2 ?? "", attending: r?.attending ?? "" }}
+          staffList={staffList.map((s) => ({ name: s.displayName, role: s.clinicalRole }))}
+        />
       </Panel>
     </div>
   );

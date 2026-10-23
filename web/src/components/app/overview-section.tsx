@@ -47,28 +47,32 @@ export interface OverviewData {
   currentRbg: number | null;
 }
 
-/** Bedside values: fingerstick RBG and urine acetone. Nurses can record these. */
+/** Bedside values: fingerstick RBG. Nurses and doctors can record this. */
 function BedsideCard({ data, hue }: { data: OverviewData; hue: Hue }) {
   const chart = useChart();
   const { run, pending, error } = useAction();
   const { toast } = useToast();
-  const [acetone, setAcetone] = useState<string>(data.urineAcetone);
   const [rbg, setRbg] = useState(data.currentRbg === null ? "" : String(data.currentRbg));
   const allowed = chart.allowed("bedside.record");
 
   return (
-    <Panel hue={hue} title="Bedside readings" description="Fingerstick glucose and urine acetone. These drive the fluid protocol." action={<Pill hue={ACETONE_HUE[acetone]}>Acetone: {acetone}</Pill>}>
+    <Panel hue={hue} title="Bedside blood glucose" description="Fingerstick random blood glucose (RBG).">
       <form
         className="grid gap-4 sm:grid-cols-2"
         onSubmit={(e) => {
           e.preventDefault();
+          const bedsidePayload = { admissionId: chart.admissionId, urineAcetone: data.urineAcetone, currentRbg: parseMeasurement(rbg) };
           void run(
-            () => recordBedside({ admissionId: chart.admissionId, urineAcetone: acetone, currentRbg: parseMeasurement(rbg) }),
-            () => toast("Bedside readings saved"),
+            () => recordBedside(bedsidePayload),
+            () => toast("Bedside blood glucose saved"),
+            {
+              type: "recordBedside",
+              payload: bedsidePayload,
+              description: `Record RBG (${rbg} mg/dL)`,
+            },
           );
         }}
       >
-        <Select label="Urine acetone" options={ACETONE_OPTIONS} value={acetone} onValueChange={setAcetone} disabled={!allowed} />
         <Input
           label="Current RBG (mg/dL)"
           type="text"
@@ -79,9 +83,9 @@ function BedsideCard({ data, hue }: { data: OverviewData; hue: Hue }) {
           disabled={!allowed}
         />
         {allowed && (
-          <div className="sm:col-span-2">
+          <div className="flex items-end">
             <Button type="submit" loading={pending}>
-              Save bedside readings
+              Save bedside glucose
             </Button>
           </div>
         )}
@@ -122,24 +126,30 @@ function ChartForm({ data }: { data: OverviewData }) {
         }
         setLocalError(null);
         const when = fromCairoInputValue(admittedAt);
+        const chartPayload = {
+          admissionId: chart.admissionId,
+          version: chart.version,
+          patientName: name,
+          age: parsedAge.value,
+          // Blank or unreadable: the server keeps the recorded admission time.
+          admittedAt: when ? when.toISOString() : undefined,
+          diagnosis,
+          riskFactors: risk,
+          labsImaging: labs,
+          consultations: consults,
+          followupPlan: plan,
+        };
         void run(
-          () =>
-            updateChart({
-              admissionId: chart.admissionId,
-              version: chart.version,
-              patientName: name,
-              age: parsedAge.value,
-              // Blank or unreadable: the server keeps the recorded admission time.
-              admittedAt: when ? when.toISOString() : undefined,
-              diagnosis,
-              riskFactors: risk,
-              labsImaging: labs,
-              consultations: consults,
-              followupPlan: plan,
-            }),
+          () => updateChart(chartPayload),
           (r) => {
             chart.setVersion(r.version);
             setSaved(true);
+          },
+          {
+            type: "updateChart",
+            payload: chartPayload,
+            description: `Update demographics for ${name || "Patient"}`,
+            optimisticResult: { version: chart.version + 1 },
           },
         );
       }}

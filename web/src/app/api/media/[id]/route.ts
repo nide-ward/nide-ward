@@ -17,7 +17,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   if (!row) return new NextResponse("Not found", { status: 404 });
   try {
     const url = await presignGet(row.objectKey);
-    return NextResponse.redirect(url, { status: 302, headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.redirect(new URL(url, _req.url), { status: 302, headers: { "Cache-Control": "private, no-store" } });
   } catch (e) {
     console.error("presign get failed", e);
     return new NextResponse("Photo storage is not configured.", { status: 503 });

@@ -11,7 +11,9 @@ export function AutoRefresh({ intervalMs = 10000 }: { intervalMs?: number }) {
   const router = useRouter();
   useEffect(() => {
     const tick = () => {
-      if (document.visibilityState === "visible") router.refresh();
+      if (document.visibilityState === "visible" && (typeof navigator === "undefined" || navigator.onLine)) {
+        router.refresh();
+      }
     };
     const id = window.setInterval(tick, intervalMs);
     document.addEventListener("visibilitychange", tick);

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import Toast from "@/components/arc/toast/toast";
 
 interface ToastItem {
@@ -17,6 +17,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const toast = useCallback((title: string, description?: string) => {
     setItems((list) => [...list.slice(-2), { id: Date.now() + Math.random(), title, description }]);
   }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ title: string; description?: string }>;
+      if (ce.detail?.title) toast(ce.detail.title, ce.detail.description);
+    };
+    window.addEventListener("ward:toast", handler);
+    return () => window.removeEventListener("ward:toast", handler);
+  }, [toast]);
+
   const value = useMemo(() => ({ toast }), [toast]);
   return (
     <ToastContext.Provider value={value}>

@@ -29,23 +29,29 @@ export function PlanSection({ data, media, hue }: { data: OverviewData; media: M
             onSubmit={(e) => {
               e.preventDefault();
               setSaved(false);
+              const chartPayload = {
+                admissionId: chart.admissionId,
+                version: chart.version,
+                patientName: data.patientName,
+                age: data.age,
+                admittedAt: data.admittedAt instanceof Date ? data.admittedAt.toISOString() : data.admittedAt,
+                diagnosis: data.diagnosis,
+                riskFactors: data.riskFactors,
+                labsImaging: labs,
+                consultations: consults,
+                followupPlan: plan,
+              };
               void run(
-                () =>
-                  updateChart({
-                    admissionId: chart.admissionId,
-                    version: chart.version,
-                    patientName: data.patientName,
-                    age: data.age,
-                    admittedAt: data.admittedAt,
-                    diagnosis: data.diagnosis,
-                    riskFactors: data.riskFactors,
-                    labsImaging: labs,
-                    consultations: consults,
-                    followupPlan: plan,
-                  }),
+                () => updateChart(chartPayload),
                 (r) => {
                   chart.setVersion(r.version);
                   setSaved(true);
+                },
+                {
+                  type: "updateChart",
+                  payload: chartPayload,
+                  description: `Save plan for ${data.patientName || "Patient"}`,
+                  optimisticResult: { version: chart.version + 1 },
                 },
               );
             }}
