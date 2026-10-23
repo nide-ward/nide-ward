@@ -188,72 +188,47 @@ body {
 }
 
 /*
- * The admit dialog: wide on desktop, a full-height sheet on phones. !important beats Arc's
- * dialog.module.css sizing, which sets a 440px box.
+ * Centered Pop-up Dialogs (Admission & Patient Chart):
+ * Midline of the screen with clear surrounding margins on all viewports (not taking up the whole screen).
  */
-.admit-dialog {
-  width: min(calc(100vw - 2rem), 44rem) !important;
-  max-height: calc(100dvh - 2rem) !important;
-  /* Header stays put and only the body scrolls, so the scrollbar sits inside the dialog under the
-     header instead of running along the rounded outer edge. The sticky action bar lives in the body. */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden !important;
-}
-.admit-dialog > :first-child {
-  flex: none;
-}
-.admit-dialog > :last-child {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  /* The sticky action bar supplies its own bottom padding, so it sits flush with the dialog edge. */
-  padding-bottom: 0 !important;
-}
-@media (max-width: 639px) {
-  .admit-dialog {
-    width: 100vw !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    border-radius: 0 !important;
-    border-width: 0 !important;
-  }
-  .admit-dialog > :first-child {
-    padding-top: calc(var(--space-6) + env(safe-area-inset-top));
-  }
-}
-
-/*
- * The patient chart pop-up dialog: expansive on desktop, full-height sheet on mobile.
- */
+.admit-dialog,
 .patient-dialog {
-  width: min(calc(100vw - 2rem), 54rem) !important;
-  max-height: calc(100dvh - 2rem) !important;
-  display: flex;
-  flex-direction: column;
+  position: fixed !important;
+  inset: 0 !important;
+  margin: auto !important;
+  width: min(calc(100vw - 2rem), 52rem) !important;
+  max-height: calc(100dvh - 3.5rem) !important;
+  display: flex !important;
+  flex-direction: column !important;
   overflow: hidden !important;
+  border-radius: 1.25rem !important;
+  border: 1px solid var(--border-strong) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
 }
+.admit-dialog > :first-child,
 .patient-dialog > :first-child {
   flex: none;
 }
+.admit-dialog > :last-child,
 .patient-dialog > :last-child {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-bottom: 2rem !important;
+  padding-bottom: 1.5rem !important;
 }
 @media (max-width: 639px) {
+  .admit-dialog,
   .patient-dialog {
-    width: 100vw !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    border-radius: 0 !important;
-    border-width: 0 !important;
+    width: calc(100vw - 1.25rem) !important;
+    max-height: calc(100dvh - 3rem) !important;
+    margin: auto !important;
+    border-radius: 1.15rem !important;
+    border: 1px solid var(--border-strong) !important;
   }
+  .admit-dialog > :first-child,
   .patient-dialog > :first-child {
-    padding-top: calc(var(--space-6) + env(safe-area-inset-top));
+    padding-top: var(--space-4);
   }
 }
 

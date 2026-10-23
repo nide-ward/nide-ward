@@ -179,8 +179,24 @@ export async function listArchive(search: string, page: number) {
 }
 
 export async function getRoster() {
-  const [row] = await getReadDb().select().from(shiftRoster).orderBy(desc(shiftRoster.id)).limit(1);
-  return row ?? null;
+  const db = getReadDb();
+  const [[row], adminProfiles] = await Promise.all([
+    db.select().from(shiftRoster).orderBy(desc(shiftRoster.id)).limit(1),
+    db.select({ displayName: staffProfile.displayName }).from(staffProfile).where(eq(staffProfile.clinicalRole, "admin")),
+  ]);
+  if (!row) return null;
+  const adminNames = adminProfiles.map((a) => a.displayName.toLowerCase().trim()).filter(Boolean);
+  const isAdmin = (name: string | null | undefined) => {
+    if (!name) return false;
+    const lower = name.toLowerCase().trim();
+    return adminNames.some((adminName) => lower === adminName || lower.includes(adminName) || adminName.includes(lower));
+  };
+  return {
+    ...row,
+    doc1: isAdmin(row.doc1) ? "" : row.doc1,
+    doc2: isAdmin(row.doc2) ? null : row.doc2,
+    attending: isAdmin(row.attending) ? "" : row.attending,
+  };
 }
 
 export async function listStaff() {

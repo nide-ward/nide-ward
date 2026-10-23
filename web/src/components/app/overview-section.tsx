@@ -48,56 +48,6 @@ export interface OverviewData {
   currentRbg: number | null;
 }
 
-/** Bedside values: fingerstick RBG. Nurses and doctors can record this. */
-function BedsideCard({ data, hue }: { data: OverviewData; hue: Hue }) {
-  const chart = useChart();
-  const { run, pending, error } = useAction();
-  const { toast } = useToast();
-  const [rbg, setRbg] = useState(data.currentRbg === null ? "" : String(data.currentRbg));
-  const allowed = chart.allowed("bedside.record");
-
-  return (
-    <Panel hue={hue} title="Bedside blood glucose" description="Fingerstick random blood glucose (RBG).">
-      <form
-        className="grid gap-4 sm:grid-cols-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const bedsidePayload = { admissionId: chart.admissionId, urineAcetone: data.urineAcetone, currentRbg: parseMeasurement(rbg) };
-          void run(
-            () => recordBedside(bedsidePayload),
-            () => toast("Bedside blood glucose saved"),
-            {
-              type: "recordBedside",
-              payload: bedsidePayload,
-              description: `Record RBG (${rbg} mg/dL)`,
-            },
-          );
-        }}
-      >
-        <Input
-          label="Current RBG (mg/dL)"
-          type="text"
-          inputMode="decimal"
-          autoComplete="off"
-          value={rbg}
-          onChange={(e) => setRbg(normalizeNumericText(e.target.value))}
-          disabled={!allowed}
-        />
-        {allowed && (
-          <div className="flex items-end">
-            <Button type="submit" loading={pending}>
-              Save bedside glucose
-            </Button>
-          </div>
-        )}
-        <div className="sm:col-span-2">
-          <InlineError>{error}</InlineError>
-        </div>
-      </form>
-    </Panel>
-  );
-}
-
 function ChartForm({ data }: { data: OverviewData }) {
   const chart = useChart();
   const { run, pending, error, conflict } = useAction();
@@ -132,7 +82,6 @@ function ChartForm({ data }: { data: OverviewData }) {
           version: chart.version,
           patientName: name,
           age: parsedAge.value,
-          // Blank or unreadable: the server keeps the recorded admission time.
           admittedAt: when ? when.toISOString() : undefined,
           diagnosis,
           riskFactors: risk,
@@ -195,7 +144,6 @@ export function OverviewSection({ data, hue }: { data: OverviewData; hue: Hue })
   const chart = useChart();
   return (
     <div className="grid gap-4">
-      <BedsideCard data={data} hue={hue} />
       <Panel hue={hue} title="Patient admission details">
         {chart.allowed("chart.edit") ? (
           <ChartForm data={data} />

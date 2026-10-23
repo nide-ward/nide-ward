@@ -604,13 +604,16 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
         <!-- SECTION 2: WHOLE BLOOD GASES & AI-ASSISTED ABG READER -->
         <div id="section-abg" class="modal-section space-y-4 hidden">
 
-          <!-- Urine Acetone Level (Monitored alongside ABG) -->
-          <div class="bg-teal-50/70 border border-teal-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+          <!-- Point-of-Care Bedside Labs: RBG & Urine Acetone (Monitored alongside ABG) -->
+          <div class="bg-teal-50/70 border border-teal-200 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-teal-950 uppercase tracking-wider mb-0.5" for="patient-current-rbg">Bedside RBG (mg/dL)</label>
+              <p class="text-[11px] text-teal-800 mb-1.5">Latest point-of-care fingerstick blood glucose.</p>
+              <input type="number" id="patient-current-rbg" placeholder="e.g. 240" class="w-full px-3 py-1.5 border border-teal-300 rounded-lg text-xs bg-white font-semibold text-slate-800 focus:ring-1 focus:ring-teal-500 focus:outline-none">
+            </div>
             <div>
               <label class="block text-xs font-bold text-teal-950 uppercase tracking-wider mb-0.5" for="patient-urine-acetone">Urine Acetone Level</label>
-              <p class="text-[11px] text-teal-800">Monitored alongside serial acid-base progression.</p>
-            </div>
-            <div class="w-48">
+              <p class="text-[11px] text-teal-800 mb-1.5">Monitored alongside serial acid-base progression.</p>
               <select id="patient-urine-acetone" class="w-full px-3 py-1.5 border border-teal-300 rounded-lg text-xs bg-white font-semibold text-slate-800 focus:ring-1 focus:ring-teal-500 focus:outline-none">
                 <option value="Negative">Negative (Nil)</option>
                 <option value="Trace">Trace (+/-)</option>
@@ -896,11 +899,6 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
             </div>
           </div>
 
-          <!-- Point-of-Care Fingerstick RBG -->
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1" for="patient-current-rbg">Latest Fingerstick RBG (mg/dL)</label>
-            <input type="number" id="patient-current-rbg" placeholder="e.g. 240" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-1 focus:ring-teal-500 focus:outline-none">
-          </div>
 
           <!-- Drug Sheet Table -->
           <div class="bg-white border border-slate-200 rounded-xl p-3.5">

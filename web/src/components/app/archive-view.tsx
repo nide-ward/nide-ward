@@ -10,6 +10,8 @@ import { SortableDataTable, type DataColumn } from "@/components/arc/sortable-da
 import { HUE, outcomeHue } from "@/lib/hues";
 import { NO_DIAGNOSIS, ageText, isBlank } from "@/lib/display";
 import { deleteArchivedAdmission } from "@/server/actions/patients";
+import type { ClinicalRole } from "@/lib/permissions";
+import { PatientDialog } from "./patient-dialog";
 import { useAction } from "./use-action";
 import { InlineError, Pill } from "./ui";
 import { useToast } from "./toast-provider";
@@ -61,6 +63,7 @@ export function ArchiveView({
   pageSize,
   q,
   canDelete,
+  role = "resident",
 }: {
   rows: ArchiveRow[];
   total: number;
@@ -68,9 +71,11 @@ export function ArchiveView({
   pageSize: number;
   q: string;
   canDelete: boolean;
+  role?: ClinicalRole;
 }) {
   const router = useRouter();
   const [term, setTerm] = useState(q);
+  const [activePatientId, setActivePatientId] = useState<string | null>(null);
   const first = useRef(true);
   useEffect(() => {
     if (first.current) {
@@ -88,7 +93,15 @@ export function ArchiveView({
         label: "Patient",
         sortable: true,
         render: (_v, r) => (
-          <Link href={`/patients/${r.id}`} className="font-medium underline-offset-2 hover:underline">
+          <Link
+            href={`/patients/${r.id}`}
+            className="font-medium underline-offset-2 hover:underline cursor-pointer"
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+              e.preventDefault();
+              setActivePatientId(r.id);
+            }}
+          >
             {r.patient}
           </Link>
         ),
@@ -152,7 +165,15 @@ export function ArchiveView({
           <ul className="grid gap-2 sm:hidden" aria-label="Discharged patients, newest first">
             {rows.map((r) => (
               <li key={r.id} className={`grid gap-2 rounded-xl border border-border bg-surface p-3 ${outcomeHue(r.outcome) ? HUE[outcomeHue(r.outcome)!].edge : "border-l-4 border-l-border-strong"}`}>
-                <Link href={`/patients/${r.id}`} className="grid gap-1 hover:opacity-90">
+                <Link
+                  href={`/patients/${r.id}`}
+                  className="grid gap-1 hover:opacity-90 cursor-pointer"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                    e.preventDefault();
+                    setActivePatientId(r.id);
+                  }}
+                >
                   <span className="flex items-baseline justify-between gap-2">
                     <span className="min-w-0 truncate font-medium">{r.patient}</span>
                     {r.age !== null && <span className="shrink-0 text-sm text-text-secondary">{ageText(r.age)}</span>}
@@ -200,6 +221,13 @@ export function ArchiveView({
           )}
         </span>
       </nav>
+      {activePatientId && (
+        <PatientDialog
+          admissionId={activePatientId}
+          role={role}
+          onClose={() => setActivePatientId(null)}
+        />
+      )}
     </div>
   );
 }

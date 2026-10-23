@@ -34,9 +34,13 @@ export function AppHeader({ name, role, roster, theme }: Props) {
     { href: "/staff", label: "Staff", short: "Staff", icon: Users, show: can(role, "staff.manage") },
   ].filter((l) => l.show);
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
-  const rosterText = roster
-    ? `Duty: ${roster.doc1}${roster.doc2 ? ` and ${roster.doc2}` : ""}. Attending: ${roster.attending}`
-    : "No shift roster set yet";
+  const dutyDoctors = [roster?.doc1, roster?.doc2].filter(Boolean);
+  const dutyText = dutyDoctors.length > 0 ? `Duty: ${dutyDoctors.join(" and ")}` : "";
+  const attendingText = roster?.attending ? `Attending: ${roster.attending}` : "";
+  const rosterText =
+    dutyText && attendingText
+      ? `${dutyText}. ${attendingText}`
+      : dutyText || attendingText || "No shift roster set yet";
 
   const [signingOut, setSigningOut] = useState(false);
   async function signOut() {

@@ -381,45 +381,62 @@ const ACETONE_OPTIONS = [
   { value: "++++", label: "++++ (very large)" },
 ];
 
-function AcetoneCard({ initialAcetone = "Negative", currentRbg = null }: { initialAcetone?: string; currentRbg?: number | null }) {
+function BedsideLabsCard({ initialAcetone = "Negative", currentRbg = null }: { initialAcetone?: string; currentRbg?: number | null }) {
   const chart = useChart();
   const { run, pending, error } = useAction();
   const { toast } = useToast();
   const [acetone, setAcetone] = useState<string>(initialAcetone);
+  const [rbg, setRbg] = useState<string>(currentRbg === null || currentRbg === undefined ? "" : String(currentRbg));
   const allowed = chart.allowed("bedside.record");
 
   return (
     <Panel
       hue="sky"
-      title="Urine Acetone"
-      description="Serial bedside urine acetone evaluation."
-      action={<Pill hue={ACETONE_HUE[acetone]}>Acetone: {acetone}</Pill>}
+      title="Bedside Blood Glucose & Urine Acetone"
+      description="Point-of-care fingerstick RBG and serial bedside urine ketone evaluation."
+      action={
+        <div className="flex items-center gap-2">
+          {rbg && <Pill hue="rose">RBG: {rbg} mg/dL</Pill>}
+          <Pill hue={ACETONE_HUE[acetone]}>Acetone: {acetone}</Pill>
+        </div>
+      }
     >
       <form
-        className="flex flex-wrap items-end gap-3"
+        className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         onSubmit={(e) => {
           e.preventDefault();
-          const bedsidePayload = { admissionId: chart.admissionId, urineAcetone: acetone, currentRbg };
+          const parsedRbg = parseMeasurement(rbg);
+          const bedsidePayload = { admissionId: chart.admissionId, urineAcetone: acetone, currentRbg: parsedRbg };
           void run(
             () => recordBedside(bedsidePayload),
-            () => toast("Urine acetone updated"),
+            () => toast("Bedside blood glucose & acetone saved"),
             {
               type: "recordBedside",
               payload: bedsidePayload,
-              description: `Set urine acetone to ${acetone}`,
+              description: `Record RBG (${rbg || "--"} mg/dL) and acetone (${acetone})`,
             },
           );
         }}
       >
-        <div className="w-64">
-          <Select label="Urine acetone level" options={ACETONE_OPTIONS} value={acetone} onValueChange={setAcetone} disabled={!allowed} />
-        </div>
+        <Input
+          label="Fingerstick RBG (mg/dL)"
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          placeholder="e.g. 240"
+          value={rbg}
+          onChange={(e) => setRbg(normalizeNumericText(e.target.value))}
+          disabled={!allowed}
+        />
+        <Select label="Urine acetone level" options={ACETONE_OPTIONS} value={acetone} onValueChange={setAcetone} disabled={!allowed} />
         {allowed && (
           <Button type="submit" loading={pending} size="sm">
-            Save Acetone
+            Save Bedside Labs
           </Button>
         )}
-        <InlineError>{error}</InlineError>
+        <div className="sm:col-span-3">
+          <InlineError>{error}</InlineError>
+        </div>
       </form>
     </Panel>
   );
@@ -440,7 +457,7 @@ export function AbgSection({
   const latest = rows.length ? rows[rows.length - 1] : null;
   return (
     <div className="grid gap-4">
-      <AcetoneCard initialAcetone={initialAcetone} currentRbg={currentRbg} />
+      <BedsideLabsCard initialAcetone={initialAcetone} currentRbg={currentRbg} />
       {chart.allowed("abg.record") && (
         <Panel hue="sky" title="Log a reading" description="Scheduled draws are 03:00, 07:00, 11:00, 15:00, 19:00 and 23:00.">
           <EntryForm />

@@ -35,7 +35,15 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
         <h1 className="text-2xl font-medium">Archive</h1>
         <p className="text-text-secondary">Discharged admissions. You can delete a record permanently when it is no longer needed.</p>
       </div>
-      <ArchiveView rows={data} total={total} page={page} pageSize={pageSize} q={q} canDelete={can(staff.role, "archive.delete")} />
+      <ArchiveView
+        rows={data}
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        q={q}
+        canDelete={can(staff.role, "archive.delete")}
+        role={staff.role}
+      />
     </div>
   );
 }
