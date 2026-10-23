@@ -35,46 +35,53 @@ export default async function CensusPrint() {
           </tr>
         </thead>
         <tbody>
-          {board.flatMap((w) =>
-            w.beds.map((b) => {
-              const a = b.admission;
-              if (!a) {
-                return (
-                  <tr key={b.id} className="muted">
-                    <td>{w.title}, {b.name}</td>
-                    <td colSpan={5}><em>Available bed</em></td>
-                  </tr>
-                );
-              }
-              const full = admissions.get(a.id);
-              const reg = regimens.get(a.id);
-              const res = analyzeABG(a.latestAbg);
-              const drugs = meds.filter((m) => m.admissionId === a.id);
+          {(() => {
+            const admittedRows = board.flatMap((w) =>
+              w.beds
+                .filter((b) => b.admission !== null)
+                .map((b) => {
+                  const a = b.admission!;
+                  const full = admissions.get(a.id);
+                  const reg = regimens.get(a.id);
+                  const res = analyzeABG(a.latestAbg);
+                  const drugs = meds.filter((m) => m.admissionId === a.id);
+                  return (
+                    <tr key={b.id}>
+                      <td>{w.title}, {b.name}</td>
+                      <td><b>{patientLabel(a.patientName)}</b>{a.age !== null && ` (${ageShort(a.age)})`}</td>
+                      <td>
+                        <b>{isBlank(a.diagnosis) ? NO_DIAGNOSIS : a.diagnosis}</b>
+                        <div className="muted">{full?.riskFactors || "None"}</div>
+                      </td>
+                      <td>
+                        {a.latestAbg
+                          ? `pH ${a.latestAbg.ph ?? "--"} pCO2 ${a.latestAbg.pco2 ?? "--"} HCO3 ${a.latestAbg.hco3 ?? "--"} (AG ${res && res.ag !== null ? res.ag : "unmeasured"})`
+                          : "No ABG"}
+                        <div className="muted">
+                          Acetone {full?.urineAcetone ?? "Negative"}. {res?.isShiftReady ? "Shift to basal-bolus (pH 7.35 or above)" : "Q2H IM insulin protocol"}
+                        </div>
+                      </td>
+                      <td>
+                        {reg ? regimenSummary(reg) : "--"}
+                        <div className="muted">Rx: {drugs.length ? drugs.map((d) => `${d.name} (${d.dose})`).join(", ") : "None"}</div>
+                      </td>
+                      <td>{full?.followupPlan || "Routine ward care"}</td>
+                    </tr>
+                  );
+                }),
+            );
+
+            if (admittedRows.length === 0) {
               return (
-                <tr key={b.id}>
-                  <td>{w.title}, {b.name}</td>
-                  <td><b>{patientLabel(a.patientName)}</b>{a.age !== null && ` (${ageShort(a.age)})`}</td>
-                  <td>
-                    <b>{isBlank(a.diagnosis) ? NO_DIAGNOSIS : a.diagnosis}</b>
-                    <div className="muted">{full?.riskFactors || "None"}</div>
+                <tr>
+                  <td colSpan={6} className="text-center py-6 muted font-medium">
+                    No admitted patients currently in the ward.
                   </td>
-                  <td>
-                    {a.latestAbg
-                      ? `pH ${a.latestAbg.ph ?? "--"} pCO2 ${a.latestAbg.pco2 ?? "--"} HCO3 ${a.latestAbg.hco3 ?? "--"} (AG ${res && res.ag !== null ? res.ag : "unmeasured"})`
-                      : "No ABG"}
-                    <div className="muted">
-                      Acetone {full?.urineAcetone ?? "Negative"}. {res?.isShiftReady ? "Shift to basal-bolus (pH 7.35 or above)" : "Q2H IM insulin protocol"}
-                    </div>
-                  </td>
-                  <td>
-                    {reg ? regimenSummary(reg) : "--"}
-                    <div className="muted">Rx: {drugs.length ? drugs.map((d) => `${d.name} (${d.dose})`).join(", ") : "None"}</div>
-                  </td>
-                  <td>{full?.followupPlan || "Routine ward care"}</td>
                 </tr>
               );
-            }),
-          )}
+            }
+            return admittedRows;
+          })()}
         </tbody>
       </table>
     </div>

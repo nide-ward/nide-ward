@@ -3,6 +3,8 @@
 import { and, desc, eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { deleteObject } from "@/lib/storage";
+import { requireStaff } from "@/lib/session";
+import { getAdmissionDetail } from "../queries";
 import {
   addMedicationSchema,
   admitSchema,
@@ -242,4 +244,11 @@ export async function deleteArchivedAdmission(raw: unknown): Promise<ActionResul
       await deleteObject(key).catch((e) => console.warn("Could not delete object", key, e));
     }
   });
+}
+
+export async function getAdmissionDetailAction(id: string) {
+  const staff = await requireStaff();
+  const detail = await getAdmissionDetail(id);
+  if (!detail) return null;
+  return { detail, role: staff.role };
 }

@@ -224,6 +224,39 @@ body {
   }
 }
 
+/*
+ * The patient chart pop-up dialog: expansive on desktop, full-height sheet on mobile.
+ */
+.patient-dialog {
+  width: min(calc(100vw - 2rem), 54rem) !important;
+  max-height: calc(100dvh - 2rem) !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+.patient-dialog > :first-child {
+  flex: none;
+}
+.patient-dialog > :last-child {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 2rem !important;
+}
+@media (max-width: 639px) {
+  .patient-dialog {
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border-width: 0 !important;
+  }
+  .patient-dialog > :first-child {
+    padding-top: calc(var(--space-6) + env(safe-area-inset-top));
+  }
+}
+
 /* Native fields that Arc has no component for (datetime-local) match Arc inputs. */
 .native-field {
   min-height: var(--control-height-md);

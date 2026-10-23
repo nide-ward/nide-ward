@@ -14,6 +14,7 @@ import { can, type ClinicalRole } from "@/lib/permissions";
 import type { BoardBed, BoardWard } from "@/server/queries";
 
 import { AdmitDialog, type AdmitTarget } from "./admit-dialog";
+import { PatientDialog } from "./patient-dialog";
 import { Pill } from "./ui";
 
 const TYPE_LABEL: Record<BoardBed["type"], string> = { regular: "Standard", extra: "Extra", paid: "Private", overflow: "Surge" };
@@ -24,38 +25,39 @@ interface CardProps {
   now: Date;
   canAdmit: boolean;
   onAdmit: (bed: BoardBed, ward: BoardWard) => void;
+  onOpenPatient: (admissionId: string) => void;
 }
 
-function BedCard({ bed, ward, now, canAdmit, onAdmit }: CardProps) {
+function BedCard({ bed, ward, now, canAdmit, onAdmit, onOpenPatient }: CardProps) {
   const hue = wardHue(ward.id);
   const h = HUE[hue];
   const typePill = <Pill hue={BED_TYPE_HUE[bed.type]}>{TYPE_LABEL[bed.type]}</Pill>;
   const a = bed.admission;
+
   if (!a) {
-    // Phone: one compact row per empty bed. From `sm` up: a card the same size as an occupied bed.
-    const empty = `w-full min-w-0 max-w-full overflow-hidden flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-xs hover:shadow-md transition-all ${h.edge} ${h.hover} sm:min-h-44 sm:flex-col sm:items-stretch sm:p-4`;
-    const inner = (
-      <>
-        <div className="flex min-w-0 items-center gap-2 sm:justify-between">
-          <span className="font-semibold text-foreground">{bed.name}</span>
-          {typePill}
-        </div>
-        <div className="hidden py-4 text-center sm:block">
-          <p className="font-bold text-emerald-600 dark:text-emerald-400">Available bed</p>
+    const emptyCard = (
+      <div className="flex flex-col justify-between flex-1 p-3.5 gap-2">
+        <div className="py-4 text-center my-auto">
+          <p className="font-bold text-sm text-emerald-600 dark:text-emerald-400">Available bed</p>
           <p className="text-xs text-text-secondary">Ready for intake</p>
         </div>
-        <p className="flex shrink-0 items-center gap-3 text-xs font-semibold">
-          <span className="font-bold text-emerald-600 dark:text-emerald-400 sm:hidden">Available</span>
-          {canAdmit && <span className="rounded-lg bg-teal-600 px-2.5 py-1 font-bold text-white shadow-xs sm:hidden">+ Admit</span>}
-          <span className={`hidden font-bold sm:inline ${canAdmit ? "text-teal-600 hover:text-teal-700" : "text-text-secondary"}`}>{canAdmit ? "+ Admit patient" : "Empty"}</span>
-        </p>
-      </>
+        <div className="border-t border-border/50 pt-2 flex items-center justify-between text-xs font-semibold">
+          <span className="text-text-secondary">Ready for intake</span>
+          {canAdmit ? (
+            <span className="rounded-lg bg-teal-600 px-2.5 py-1 font-bold text-white shadow-xs">+ Admit</span>
+          ) : (
+            <span className="text-text-secondary">Empty</span>
+          )}
+        </div>
+      </div>
     );
+
+    const emptyWrapper = `w-full min-w-0 max-w-full overflow-hidden flex flex-col justify-between rounded-2xl border min-h-[175px] shadow-xs hover:shadow-md transition-all cursor-pointer ${h.edge} ${h.hover}`;
+
     return canAdmit ? (
-      // A real link, so a direct open or new tab still reaches the admit page; a plain tap opens the dialog instead.
       <Link
         href={`/beds/${bed.id}/admit`}
-        className={empty}
+        className={emptyWrapper}
         aria-label={`${bed.name}, available. Admit patient`}
         onClick={(e) => {
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
@@ -63,60 +65,79 @@ function BedCard({ bed, ward, now, canAdmit, onAdmit }: CardProps) {
           onAdmit(bed, ward);
         }}
       >
-        {inner}
+        <div className={`flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-border/40 ${h.band}`}>
+          <span className={`text-xs font-bold uppercase tracking-wider ${h.ink}`}>{bed.name}</span>
+          {typePill}
+        </div>
+        {emptyCard}
       </Link>
     ) : (
-      <div className={empty}>{inner}</div>
+      <div className={emptyWrapper}>
+        <div className={`flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-border/40 ${h.band}`}>
+          <span className={`text-xs font-bold uppercase tracking-wider ${h.ink}`}>{bed.name}</span>
+          {typePill}
+        </div>
+        {emptyCard}
+      </div>
     );
   }
 
   const latest = a.latestAbg;
   const analysis = analyzeABG(latest);
-  const status = calculateABGStatus(latest ? latest.takenAt : null, now);
   const nameBlank = isBlank(a.patientName);
   const who = patientLabel(a.patientName);
+
   return (
     <Link
       href={`/patients/${a.id}`}
-      className={`w-full min-w-0 max-w-full overflow-hidden flex flex-col justify-between rounded-2xl border p-4 sm:min-h-44 shadow-xs hover:shadow-md transition-all ${h.card}`}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        onOpenPatient(a.id);
+      }}
+      className={`w-full min-w-0 max-w-full overflow-hidden flex flex-col justify-between rounded-2xl border min-h-[175px] shadow-xs hover:shadow-md transition-all cursor-pointer ${h.card}`}
       aria-label={`${bed.name}, ${who}. Open chart`}
     >
-      <div className="grid gap-1 min-w-0 w-full overflow-hidden">
-        {/* Header band in the ward's colour, as the prototype tints its occupied beds. */}
-        <div className={`-mx-4 -mt-4 mb-2 flex items-center justify-between gap-2 px-4 py-2 ${h.band}`}>
-          <span className={`font-bold ${h.ink}`}>{bed.name}</span>
-          {typePill}
-        </div>
-        <p className={`truncate text-base font-bold text-foreground ${nameBlank ? "text-text-secondary" : ""}`}>{who}</p>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-medium text-text-secondary">
-          <span>{ageText(a.age)}</span>
-        </div>
-        <p className={`line-clamp-2 text-xs font-medium ${isBlank(a.diagnosis) ? "text-text-muted" : "text-text-secondary"}`}>{isBlank(a.diagnosis) ? NO_DIAGNOSIS : a.diagnosis}</p>
-        {latest && (
-          <p className="tnum mt-1.5 flex flex-wrap justify-between gap-x-3 rounded-lg border border-border bg-surface-muted/60 px-2.5 py-1.5 text-xs">
-            <span>
-              pH <b className={latest.ph !== null && latest.ph < 7.35 ? "font-bold text-rose-600 dark:text-rose-400" : "font-bold"}>{latest.ph ?? "--"}</b>
-            </span>
-            <span>
-              HCO3 <b className="font-bold">{latest.hco3 ?? "--"}</b>
-            </span>
-            <span>
-              AG <b className={`font-bold ${analysis?.isHighAG ? "text-amber-600 dark:text-amber-400" : ""}`}>{analysis && analysis.ag !== null ? analysis.ag : "--"}</b>
-            </span>
-          </p>
-        )}
+      <div className={`flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-border/40 ${h.band}`}>
+        <span className={`text-xs font-bold uppercase tracking-wider ${h.ink}`}>{bed.name}</span>
+        {typePill}
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <Pill hue="purple">Lantus {a.basalUnits}U</Pill>
-        {a.mediaCount > 0 && <Pill hue="cyan">{a.mediaCount} lab photo{a.mediaCount === 1 ? "" : "s"}</Pill>}
+
+      <div className="p-3.5 flex flex-col justify-between flex-1 gap-2">
+        <div className="grid gap-1 min-w-0 w-full overflow-hidden">
+          <p className={`truncate text-sm sm:text-base font-bold text-foreground ${nameBlank ? "text-text-secondary" : ""}`}>{who}</p>
+          <div className="flex items-center justify-between gap-2 text-xs font-medium text-text-secondary">
+            <span>{ageText(a.age) || "--"}</span>
+            <span className="truncate max-w-[150px]">{isBlank(a.diagnosis) ? NO_DIAGNOSIS : a.diagnosis}</span>
+          </div>
+          {latest && (
+            <div className="tnum mt-1 flex items-center justify-between rounded-lg border border-border/60 bg-surface-muted/60 px-2 py-1 text-xs">
+              <span>
+                pH <b className={latest.ph !== null && latest.ph < 7.35 ? "font-bold text-rose-600 dark:text-rose-400" : "font-bold"}>{latest.ph ?? "--"}</b>
+              </span>
+              <span>
+                HCO3 <b className="font-bold">{latest.hco3 ?? "--"}</b>
+              </span>
+              <span>
+                AG <b className={`font-bold ${analysis?.isHighAG ? "text-amber-600 dark:text-amber-400" : ""}`}>{analysis && analysis.ag !== null ? analysis.ag : "--"}</b>
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-1">
+          <Pill hue="purple">Lantus {a.basalUnits}U</Pill>
+          {a.mediaCount > 0 && <Pill hue="cyan">{a.mediaCount} lab photo{a.mediaCount === 1 ? "" : "s"}</Pill>}
+        </div>
+
+        <div className="border-t border-border/50 pt-2 flex items-center justify-between text-xs font-semibold">
+          <span className="flex items-center gap-1.5 text-text-secondary">
+            <span aria-hidden="true" className={`size-2 rounded-full ${h.dot}`} />
+            Occupied
+          </span>
+          <span className="text-teal-600 font-bold hover:text-teal-700 flex items-center gap-0.5">Chart &rarr;</span>
+        </div>
       </div>
-      <p className="mt-3 flex items-center justify-between border-t border-border pt-2 text-xs font-bold">
-        <span className="flex items-center gap-1.5 text-text-secondary">
-          <span aria-hidden="true" className={`size-2 rounded-full ${h.dot}`} />
-          Occupied
-        </span>
-        <span className="text-teal-600 font-bold hover:text-teal-700 flex items-center gap-0.5">Chart &rarr;</span>
-      </p>
     </Link>
   );
 }
@@ -176,6 +197,7 @@ export function Board({ wards, role, nowIso }: { wards: BoardWard[]; role: Clini
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [admitTarget, setAdmitTarget] = useState<AdmitTarget | null>(null);
+  const [activePatientId, setActivePatientId] = useState<string | null>(null);
   // `now` starts as the server's time so markup matches on hydration, then ticks locally.
   const [local, setLocal] = useState<Date | null>(null);
   const now = useMemo(() => local ?? new Date(nowIso), [local, nowIso]);
@@ -280,7 +302,15 @@ export function Board({ wards, role, nowIso }: { wards: BoardWard[]; role: Clini
             ) : (
               <div className="w-full min-w-0 max-w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
                 {beds.map((b) => (
-                  <BedCard key={b.id} bed={b} ward={w} now={now} canAdmit={canAdmit} onAdmit={openAdmit} />
+                  <BedCard
+                    key={b.id}
+                    bed={b}
+                    ward={w}
+                    now={now}
+                    canAdmit={canAdmit}
+                    onAdmit={openAdmit}
+                    onOpenPatient={setActivePatientId}
+                  />
                 ))}
               </div>
             )}
@@ -288,6 +318,13 @@ export function Board({ wards, role, nowIso }: { wards: BoardWard[]; role: Clini
         );
       })}
       {canAdmit && <AdmitDialog target={admitTarget} onClose={closeAdmit} />}
+      {activePatientId && (
+        <PatientDialog
+          admissionId={activePatientId}
+          role={role}
+          onClose={() => setActivePatientId(null)}
+        />
+      )}
     </div>
   );
 }

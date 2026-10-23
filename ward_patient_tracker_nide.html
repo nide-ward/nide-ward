@@ -3764,20 +3764,26 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
 
     // --- SHIFT ROSTER MODAL ---
     function populateShiftDropdowns() {
+      // Clinical residents only (administrators excluded)
       const docList = [
         "Dr. Ahmed Taha (Resident)",
         "Dr. Omnia Khedr (Resident)",
-        "Dr. Tareq Abdelkhalek (Resident)",
         "Dr. Mona Youssef (Resident)",
         "Dr. Mahmoud Hassan (Fellow)",
         "Dr. Sarah Mostafa (Resident)"
       ];
+      // Clinical attendings & consultants only (administrators excluded)
       const attList = [
         "Dr. Hossam (Attending)",
         "Prof. Khaled Fawzy (Consultant)",
         "Dr. Sherif Hafez (Attending)",
         "Prof. Inas Shaltout (Consultant)"
       ];
+
+      // Purge any administrator entries from current shift data
+      if (shiftData.doc1 && shiftData.doc1.toLowerCase().includes('tareq')) shiftData.doc1 = "Dr. Ahmed Taha (Resident)";
+      if (shiftData.doc2 && shiftData.doc2.toLowerCase().includes('tareq')) shiftData.doc2 = "";
+      if (shiftData.attending && shiftData.attending.toLowerCase().includes('tareq')) shiftData.attending = "Dr. Hossam (Attending)";
 
       const sel1 = document.getElementById('shift-doc-1');
       const sel2 = document.getElementById('shift-doc-2');
@@ -3787,9 +3793,9 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
       sel2.innerHTML = '<option value="">-- None (Sole Doctor on Duty) --</option>' + docList.map(d => `<option value="${d}">${d}</option>`).join('');
       selAtt.innerHTML = attList.map(a => `<option value="${a}">${a}</option>`).join('');
 
-      if (shiftData.doc1 && !docList.includes(shiftData.doc1)) sel1.innerHTML += `<option value="${shiftData.doc1}">${shiftData.doc1} (current)</option>`;
-      if (shiftData.doc2 && !docList.includes(shiftData.doc2)) sel2.innerHTML += `<option value="${shiftData.doc2}">${shiftData.doc2} (current)</option>`;
-      if (shiftData.attending && !attList.includes(shiftData.attending)) selAtt.innerHTML += `<option value="${shiftData.attending}">${shiftData.attending} (current)</option>`;
+      if (shiftData.doc1 && !docList.includes(shiftData.doc1) && !shiftData.doc1.toLowerCase().includes('tareq')) sel1.innerHTML += `<option value="${shiftData.doc1}">${shiftData.doc1} (current)</option>`;
+      if (shiftData.doc2 && !docList.includes(shiftData.doc2) && !shiftData.doc2.toLowerCase().includes('tareq')) sel2.innerHTML += `<option value="${shiftData.doc2}">${shiftData.doc2} (current)</option>`;
+      if (shiftData.attending && !attList.includes(shiftData.attending) && !shiftData.attending.toLowerCase().includes('tareq')) selAtt.innerHTML += `<option value="${shiftData.attending}">${shiftData.attending} (current)</option>`;
     }
 
     document.getElementById('btn-edit-shift').addEventListener('click', () => {
@@ -3848,16 +3854,13 @@ CREATE TABLE IF NOT EXISTS ward_shifts (
                 <td style="padding: 6px; font-size: 8pt;">${escapeHTML(p.followupPlan || 'Routine ward care')}</td>
               </tr>
             `;
-          } else {
-            rowsHTML += `
-              <tr style="border-bottom: 1px solid #f8fafc; font-size: 8.5pt; color: #94a3b8;">
-                <td style="padding: 4px; font-weight: bold;">${escapeHTML(floor.title)} - ${escapeHTML(b.name)}</td>
-                <td colspan="5" style="padding: 4px; font-style: italic;">[ AVAILABLE BED ]</td>
-              </tr>
-            `;
           }
         });
       });
+
+      if (!rowsHTML) {
+        rowsHTML = `<tr><td colspan="6" style="padding: 12px; text-align: center; color: #64748b; font-style: italic;">No admitted patients currently in the ward.</td></tr>`;
+      }
 
       printArea.innerHTML = `
         <div style="font-family: sans-serif; line-height: 1.4;">

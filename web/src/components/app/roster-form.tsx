@@ -20,40 +20,58 @@ export function RosterForm({
   staffList?: StaffItem[];
 }) {
   const { run, pending, error } = useAction();
-  const [doc1, setDoc1] = useState(initial.doc1);
-  const [doc2, setDoc2] = useState(initial.doc2);
-  const [attending, setAttending] = useState(initial.attending);
+  const [doc1, setDoc1] = useState(() => {
+    const isAdmin = staffList.some((s) => s.name === initial.doc1 && s.role === "admin");
+    return isAdmin ? "" : initial.doc1;
+  });
+  const [doc2, setDoc2] = useState(() => {
+    const isAdmin = staffList.some((s) => s.name === initial.doc2 && s.role === "admin");
+    return isAdmin ? "" : initial.doc2;
+  });
+  const [attending, setAttending] = useState(() => {
+    const isAdmin = staffList.some((s) => s.name === initial.attending && s.role === "admin");
+    return isAdmin ? "" : initial.attending;
+  });
   const [saved, setSaved] = useState(false);
 
   const docOptions = useMemo(() => {
-    // Strictly residents & admins (attendings excluded)
-    const residents = staffList.filter((s) => s.role === "resident" || s.role === "admin");
+    // Strictly clinical residents (administrators excluded)
+    const residents = staffList.filter((s) => s.role === "resident");
     const list = residents.map((s) => ({ value: s.name, label: `${s.name} (Resident)` }));
     if (initial.doc1 && !list.some((o) => o.value === initial.doc1)) {
-      list.unshift({ value: initial.doc1, label: `${initial.doc1} (current)` });
+      const isAdmin = staffList.some((s) => s.name === initial.doc1 && s.role === "admin");
+      if (!isAdmin) {
+        list.unshift({ value: initial.doc1, label: `${initial.doc1} (current)` });
+      }
     }
     return list;
   }, [staffList, initial.doc1]);
 
   const doc2Options = useMemo(() => {
-    // Strictly residents & admins (attendings excluded)
-    const residents = staffList.filter((s) => s.role === "resident" || s.role === "admin");
+    // Strictly clinical residents (administrators excluded)
+    const residents = staffList.filter((s) => s.role === "resident");
     const list = [
       { value: "", label: "-- None (Sole Doctor on Duty) --" },
       ...residents.map((s) => ({ value: s.name, label: `${s.name} (Resident)` })),
     ];
     if (initial.doc2 && !list.some((o) => o.value === initial.doc2)) {
-      list.push({ value: initial.doc2, label: `${initial.doc2} (current)` });
+      const isAdmin = staffList.some((s) => s.name === initial.doc2 && s.role === "admin");
+      if (!isAdmin) {
+        list.push({ value: initial.doc2, label: `${initial.doc2} (current)` });
+      }
     }
     return list;
   }, [staffList, initial.doc2]);
 
   const attendingOptions = useMemo(() => {
-    // Strictly attendings & admins (residents excluded)
-    const attendings = staffList.filter((s) => s.role === "attending" || s.role === "admin");
+    // Strictly clinical attendings (administrators excluded)
+    const attendings = staffList.filter((s) => s.role === "attending");
     const list = attendings.map((s) => ({ value: s.name, label: `${s.name} (Attending)` }));
     if (initial.attending && !list.some((o) => o.value === initial.attending)) {
-      list.unshift({ value: initial.attending, label: `${initial.attending} (current)` });
+      const isAdmin = staffList.some((s) => s.name === initial.attending && s.role === "admin");
+      if (!isAdmin) {
+        list.unshift({ value: initial.attending, label: `${initial.attending} (current)` });
+      }
     }
     return list;
   }, [staffList, initial.attending]);
