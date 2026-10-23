@@ -18,6 +18,7 @@ import { Definition, InlineError, Panel, Pill } from "./ui";
 import { useToast } from "./toast-provider";
 
 const RISK_TAGS = [
+  "Uncontrolled",
   "Missed Doses",
   "Common Cold",
   "Recent T1DM",

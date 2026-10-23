@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FileText } from "lucide-react";
 import EmptyState from "@/components/arc/empty-state/empty-state";
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control";
 import { SearchField } from "@/components/arc/search-field/search-field";
@@ -32,21 +33,21 @@ function BedCard({ bed, ward, now, canAdmit, onAdmit }: CardProps) {
   const a = bed.admission;
   if (!a) {
     // Phone: one compact row per empty bed. From `sm` up: a card the same size as an occupied bed.
-    const empty = `flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3 ${h.edge} ${h.hover} sm:min-h-44 sm:flex-col sm:items-stretch sm:p-4`;
+    const empty = `w-full min-w-0 max-w-full overflow-hidden flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-xs hover:shadow-md transition-all ${h.edge} ${h.hover} sm:min-h-44 sm:flex-col sm:items-stretch sm:p-4`;
     const inner = (
       <>
         <div className="flex min-w-0 items-center gap-2 sm:justify-between">
-          <span className="font-medium">{bed.name}</span>
+          <span className="font-semibold text-foreground">{bed.name}</span>
           {typePill}
         </div>
         <div className="hidden py-4 text-center sm:block">
-          <p className="font-medium text-hue-emerald-ink">Available bed</p>
-          <p className="text-sm text-text-secondary">Ready for intake</p>
+          <p className="font-bold text-emerald-600 dark:text-emerald-400">Available bed</p>
+          <p className="text-xs text-text-secondary">Ready for intake</p>
         </div>
-        <p className="flex shrink-0 items-center gap-3 text-sm">
-          <span className="font-medium text-hue-emerald-ink sm:hidden">Available</span>
-          {canAdmit && <span className="rounded-lg bg-accent px-2.5 py-1 font-medium text-accent-foreground sm:hidden">Admit</span>}
-          <span className={`hidden font-medium sm:inline ${canAdmit ? "text-accent-strong" : "text-text-secondary"}`}>{canAdmit ? "+ Admit patient" : "Empty"}</span>
+        <p className="flex shrink-0 items-center gap-3 text-xs font-semibold">
+          <span className="font-bold text-emerald-600 dark:text-emerald-400 sm:hidden">Available</span>
+          {canAdmit && <span className="rounded-lg bg-teal-600 px-2.5 py-1 font-bold text-white shadow-xs sm:hidden">+ Admit</span>}
+          <span className={`hidden font-bold sm:inline ${canAdmit ? "text-teal-600 hover:text-teal-700" : "text-text-secondary"}`}>{canAdmit ? "+ Admit patient" : "Empty"}</span>
         </p>
       </>
     );
@@ -77,44 +78,44 @@ function BedCard({ bed, ward, now, canAdmit, onAdmit }: CardProps) {
   return (
     <Link
       href={`/patients/${a.id}`}
-      className={`flex flex-col justify-between rounded-2xl border p-4 sm:min-h-44 ${h.card}`}
+      className={`w-full min-w-0 max-w-full overflow-hidden flex flex-col justify-between rounded-2xl border p-4 sm:min-h-44 shadow-xs hover:shadow-md transition-all ${h.card}`}
       aria-label={`${bed.name}, ${who}. Open chart`}
     >
-      <div className="grid gap-1">
+      <div className="grid gap-1 min-w-0 w-full overflow-hidden">
         {/* Header band in the ward's colour, as the prototype tints its occupied beds. */}
-        <div className={`-mx-4 -mt-4 mb-1 flex items-center justify-between gap-2 rounded-t-xl px-4 py-2 ${h.band}`}>
-          <span className={`font-medium ${h.ink}`}>{bed.name}</span>
+        <div className={`-mx-4 -mt-4 mb-2 flex items-center justify-between gap-2 px-4 py-2 ${h.band}`}>
+          <span className={`font-bold ${h.ink}`}>{bed.name}</span>
           {typePill}
         </div>
-        <p className={`truncate text-base font-medium ${nameBlank ? "text-text-secondary" : ""}`}>{who}</p>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-text-secondary">
+        <p className={`truncate text-base font-bold text-foreground ${nameBlank ? "text-text-secondary" : ""}`}>{who}</p>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-medium text-text-secondary">
           <span>{ageText(a.age)}</span>
         </div>
-        <p className={`line-clamp-2 text-sm ${isBlank(a.diagnosis) ? "text-text-muted" : ""}`}>{isBlank(a.diagnosis) ? NO_DIAGNOSIS : a.diagnosis}</p>
+        <p className={`line-clamp-2 text-xs font-medium ${isBlank(a.diagnosis) ? "text-text-muted" : "text-text-secondary"}`}>{isBlank(a.diagnosis) ? NO_DIAGNOSIS : a.diagnosis}</p>
         {latest && (
-          <p className="tnum mt-1 flex flex-wrap justify-between gap-x-3 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm">
+          <p className="tnum mt-1.5 flex flex-wrap justify-between gap-x-3 rounded-lg border border-border bg-surface-muted/60 px-2.5 py-1.5 text-xs">
             <span>
-              pH <b className={latest.ph !== null && latest.ph < 7.35 ? "font-medium text-hue-rose-ink" : "font-medium"}>{latest.ph ?? "--"}</b>
+              pH <b className={latest.ph !== null && latest.ph < 7.35 ? "font-bold text-rose-600 dark:text-rose-400" : "font-bold"}>{latest.ph ?? "--"}</b>
             </span>
             <span>
-              HCO3 <b className="font-medium">{latest.hco3 ?? "--"}</b>
+              HCO3 <b className="font-bold">{latest.hco3 ?? "--"}</b>
             </span>
             <span>
-              AG <b className={`font-medium ${analysis?.isHighAG ? "text-hue-amber-ink" : ""}`}>{analysis && analysis.ag !== null ? analysis.ag : "--"}</b>
+              AG <b className={`font-bold ${analysis?.isHighAG ? "text-amber-600 dark:text-amber-400" : ""}`}>{analysis && analysis.ag !== null ? analysis.ag : "--"}</b>
             </span>
           </p>
         )}
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
         <Pill hue="purple">Lantus {a.basalUnits}U</Pill>
         {a.mediaCount > 0 && <Pill hue="cyan">{a.mediaCount} lab photo{a.mediaCount === 1 ? "" : "s"}</Pill>}
       </div>
-      <p className="mt-3 flex items-center justify-between border-t border-border pt-2 text-sm font-medium">
+      <p className="mt-3 flex items-center justify-between border-t border-border pt-2 text-xs font-bold">
         <span className="flex items-center gap-1.5 text-text-secondary">
-          <span aria-hidden="true" className={`size-1.5 rounded-full ${h.dot}`} />
+          <span aria-hidden="true" className={`size-2 rounded-full ${h.dot}`} />
           Occupied
         </span>
-        <span className="text-accent-strong">Chart &rarr;</span>
+        <span className="text-teal-600 font-bold hover:text-teal-700 flex items-center gap-0.5">Chart &rarr;</span>
       </p>
     </Link>
   );
@@ -168,7 +169,7 @@ function WardTabs({ wards, value, onChange }: { wards: BoardWard[]; value: strin
   );
 }
 
-type Filter = "all" | "occupied" | "abg-due" | "shift-ready";
+type Filter = "all" | "occupied";
 
 export function Board({ wards, role, nowIso }: { wards: BoardWard[]; role: ClinicalRole; nowIso: string }) {
   const [ward, setWard] = useState(wards[0]?.id ?? "female");
@@ -205,35 +206,34 @@ export function Board({ wards, role, nowIso }: { wards: BoardWard[]; role: Clini
           if (!hit) return false;
         }
         if (filter === "occupied" && !a) return false;
-        if (filter === "abg-due") {
-          if (!a) return false;
-          if (!calculateABGStatus(a.latestAbg ? a.latestAbg.takenAt : null, now).isDue) return false;
-        }
-        if (filter === "shift-ready") {
-          if (!a || !analyzeABG(a.latestAbg)?.isShiftReady) return false;
-        }
         return true;
       });
-  }, [query, filter, now]);
+  }, [query, filter]);
 
   const active = wards.find((w) => w.id === ward) ?? wards[0];
 
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="w-full min-w-0 max-w-full grid gap-4 overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-medium">Ward board</h1>
-          <p className="tnum flex items-center gap-2 text-text-secondary">
-            <span aria-hidden="true" className="size-2 rounded-full bg-hue-emerald" />
-            Census: {occupied} of {total} beds occupied
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Ward board</h1>
+          <p className="tnum flex items-center gap-2 text-text-secondary text-sm">
+            <span aria-hidden="true" className="size-2 rounded-full bg-emerald-500" />
+            Census: <b className="text-foreground">{occupied}</b> of {total} beds occupied
           </p>
         </div>
-        <Link href="/print/census" target="_blank" className="hidden min-h-11 items-center rounded-xl bg-accent px-4 text-sm font-medium text-accent-foreground hover:bg-accent-strong hover:text-background sm:inline-flex">
-          Print ward census
+        <Link
+          href="/print/census"
+          target="_blank"
+          className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold px-3.5 py-2 text-xs shadow-xs transition active:scale-95 whitespace-nowrap"
+          title="Print entire inpatient census from all floors"
+        >
+          <FileText size={16} aria-hidden="true" />
+          <span>Print All Floors (.PDF Census)</span>
         </Link>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,22rem)_1fr] sm:items-end">
+      <div className="w-full min-w-0 max-w-full grid gap-3 sm:grid-cols-[minmax(0,22rem)_1fr] sm:items-end">
         <SearchField label="Search bed, patient or diagnosis" value={query} onValueChange={setQuery} />
         <SegmentedControl
           label="Filter beds"
@@ -241,9 +241,7 @@ export function Board({ wards, role, nowIso }: { wards: BoardWard[]; role: Clini
           onValueChange={(v) => setFilter(v as Filter)}
           options={[
             { value: "all", label: "All beds" },
-            { value: "occupied", label: "Occupied" },
-            { value: "abg-due", label: "ABG due" },
-            { value: "shift-ready", label: "Shift ready" },
+            { value: "occupied", label: "Occupied only" },
           ]}
         />
       </div>
@@ -255,7 +253,7 @@ export function Board({ wards, role, nowIso }: { wards: BoardWard[]; role: Clini
         const hue = wardHue(w.id);
         const h = HUE[hue];
         return (
-          <div key={w.id} role="tabpanel" id={`ward-panel-${w.id}`} aria-labelledby={`ward-tab-${w.id}`} hidden={w.id !== active.id} className="grid gap-3">
+          <div key={w.id} role="tabpanel" id={`ward-panel-${w.id}`} aria-labelledby={`ward-tab-${w.id}`} hidden={w.id !== active.id} className="w-full min-w-0 max-w-full grid gap-3">
             <div className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5 ${h.panel}`}>
               <div className="flex items-center gap-2.5">
                 <span aria-hidden="true" className={`size-3 rounded-full ${h.dot}`} />
@@ -264,18 +262,14 @@ export function Board({ wards, role, nowIso }: { wards: BoardWard[]; role: Clini
                   <p className={`text-sm ${h.ink}`}>{w.description}</p>
                 </div>
               </div>
-              <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-secondary" aria-label="Key">
+              <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-secondary font-medium" aria-label="Key">
                 <li className="flex items-center gap-1.5">
-                  <span aria-hidden="true" className="size-2 rounded-full bg-hue-emerald" />
+                  <span aria-hidden="true" className="size-2 rounded-full bg-emerald-500" />
                   Available
                 </li>
                 <li className="flex items-center gap-1.5">
                   <span aria-hidden="true" className={`size-2 rounded-full ${h.dot}`} />
                   Occupied
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <span aria-hidden="true" className="size-2 rounded-full bg-hue-rose motion-safe:animate-pulse" />
-                  ABG overdue
                 </li>
               </ul>
             </div>
@@ -284,7 +278,7 @@ export function Board({ wards, role, nowIso }: { wards: BoardWard[]; role: Clini
                 <EmptyState title="No beds match" description="Clear the search or choose a different filter to see this ward again." />
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="w-full min-w-0 max-w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
                 {beds.map((b) => (
                   <BedCard key={b.id} bed={b} ward={w} now={now} canAdmit={canAdmit} onAdmit={openAdmit} />
                 ))}

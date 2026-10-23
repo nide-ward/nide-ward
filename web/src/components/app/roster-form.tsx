@@ -26,7 +26,9 @@ export function RosterForm({
   const [saved, setSaved] = useState(false);
 
   const docOptions = useMemo(() => {
-    const list = staffList.map((s) => ({ value: s.name, label: `${s.name} (${s.role})` }));
+    // Strictly residents & admins (attendings excluded)
+    const residents = staffList.filter((s) => s.role === "resident" || s.role === "admin");
+    const list = residents.map((s) => ({ value: s.name, label: `${s.name} (Resident)` }));
     if (initial.doc1 && !list.some((o) => o.value === initial.doc1)) {
       list.unshift({ value: initial.doc1, label: `${initial.doc1} (current)` });
     }
@@ -34,9 +36,11 @@ export function RosterForm({
   }, [staffList, initial.doc1]);
 
   const doc2Options = useMemo(() => {
+    // Strictly residents & admins (attendings excluded)
+    const residents = staffList.filter((s) => s.role === "resident" || s.role === "admin");
     const list = [
       { value: "", label: "-- None (Sole Doctor on Duty) --" },
-      ...staffList.map((s) => ({ value: s.name, label: `${s.name} (${s.role})` })),
+      ...residents.map((s) => ({ value: s.name, label: `${s.name} (Resident)` })),
     ];
     if (initial.doc2 && !list.some((o) => o.value === initial.doc2)) {
       list.push({ value: initial.doc2, label: `${initial.doc2} (current)` });
@@ -45,7 +49,9 @@ export function RosterForm({
   }, [staffList, initial.doc2]);
 
   const attendingOptions = useMemo(() => {
-    const list = staffList.map((s) => ({ value: s.name, label: `${s.name} (${s.role})` }));
+    // Strictly attendings & admins (residents excluded)
+    const attendings = staffList.filter((s) => s.role === "attending" || s.role === "admin");
+    const list = attendings.map((s) => ({ value: s.name, label: `${s.name} (Attending)` }));
     if (initial.attending && !list.some((o) => o.value === initial.attending)) {
       list.unshift({ value: initial.attending, label: `${initial.attending} (current)` });
     }
@@ -74,25 +80,25 @@ export function RosterForm({
         {docOptions.length > 0 ? (
           <>
             <Select
-              label="Duty doctor 1 (Registered profiles only)"
+              label="Duty doctor 1 (Residents only)"
               options={docOptions}
               value={doc1}
               onValueChange={setDoc1}
-              description="Select the primary attending ward physician on duty."
+              description="Primary resident physician on duty."
             />
             <Select
-              label="Duty doctor 2 (Optional)"
+              label="Duty doctor 2 (Optional - Residents only)"
               options={doc2Options}
               value={doc2}
               onValueChange={setDoc2}
-              description="Select second doctor if paired, or leave blank."
+              description="Second resident on duty if paired, or leave empty."
             />
             <Select
-              label="Attending consultant (Registered profiles only)"
+              label="Attending consultant (Attendings only)"
               options={attendingOptions}
               value={attending}
               onValueChange={setAttending}
-              description="Select the attending supervisor on call."
+              description="Supervising consultant on call."
             />
           </>
         ) : (
