@@ -7,11 +7,14 @@ import { usernameSchema } from "./validation";
  * time it is needed and the error names exactly what is missing.
  */
 
+/** Names the missing or invalid variables, never their values, so it is safe to show to signed-in staff. */
+export class ConfigError extends Error {}
+
 function parse<T extends z.ZodType>(name: string, schema: T): z.infer<T> {
   const result = schema.safeParse(process.env);
   if (!result.success) {
     const issues = result.error.issues.map((i) => i.path.join(".")).join(", ");
-    throw new Error(`Missing or invalid environment variables for ${name}: ${issues}. See .env.example.`);
+    throw new ConfigError(`Missing or invalid environment variables for ${name}: ${issues}. See .env.example.`);
   }
   return result.data;
 }

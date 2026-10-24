@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { uploadMode } from "@/lib/env";
+import { ConfigError, uploadMode } from "@/lib/env";
 import { newObjectKey, putObject } from "@/lib/storage";
 import { guardUpload } from "../guard";
 import { MAX_UPLOAD_BYTES, sniffImageType } from "../image-rules";
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ key });
   } catch (e) {
     console.error("proxy upload failed", e);
-    return NextResponse.json({ error: "Photo storage is not configured or unreachable." }, { status: 503 });
+    const error = e instanceof ConfigError ? `Photo storage is not configured. ${e.message}` : "Photo storage is unreachable. Try again shortly.";
+    return NextResponse.json({ error }, { status: 503 });
   }
 }

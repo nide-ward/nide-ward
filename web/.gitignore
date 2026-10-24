@@ -43,3 +43,6 @@ next-env.d.ts
 
 # generated OCR assets (scripts/copy-ocr-assets.mjs)
 /public/ocr/
+
+# lab photos stored on local disk when no S3 bucket is configured (dev only); patient data, never commit
+/public/uploads/
