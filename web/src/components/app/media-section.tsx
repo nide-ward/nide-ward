@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import Button from "@/components/arc/button/button";
 import { Dialog, DialogClose, DialogContent } from "@/components/arc/dialog/dialog";
@@ -23,13 +23,20 @@ export interface MediaRow {
   createdAt: Date;
 }
 
-export function MediaSection({ media }: { media: MediaRow[] }) {
+export function MediaSection({ media: served }: { media: MediaRow[] }) {
   const chart = useChart();
   const router = useRouter();
   const { toast } = useToast();
   const { run, pending, error } = useAction();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [zoomed, setZoomed] = useState(false);
+  // Uploads and deletes show immediately; the refreshed server list then takes over.
+  const [added, setAdded] = useState<MediaRow[]>([]);
+  const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
+  const media = useMemo(
+    () => [...served, ...added.filter((a) => !served.some((m) => m.id === a.id))].filter((m) => !removed.has(m.id)),
+    [served, added, removed],
+  );
   const touchX = useRef<number | null>(null);
   const open = openIndex === null ? null : (media[openIndex] ?? null);
 
@@ -75,6 +82,7 @@ export function MediaSection({ media }: { media: MediaRow[] }) {
     const res = await registerMedia({ admissionId: chart.admissionId, objectKey: key, contentType, originalName: item.name.slice(0, 120) });
     if (!res.ok) throw new Error(res.error);
     o.onProgress(100);
+    setAdded((prev) => [...prev, { id: res.data.id, originalName: item.name.slice(0, 120), uploadedBy: res.data.uploadedBy, createdAt: res.data.createdAt }]);
     toast("Photo attached", item.name);
     router.refresh();
   }
@@ -117,7 +125,10 @@ export function MediaSection({ media }: { media: MediaRow[] }) {
                     disabled={pending}
                     aria-label={`Delete photo ${m.originalName || ""}`}
                     onClick={() => {
-                      if (window.confirm("Delete this photo?")) void run(() => deleteMedia({ admissionId: chart.admissionId, mediaId: m.id }));
+                      if (window.confirm("Delete this photo?")) void run(() => deleteMedia({ admissionId: chart.admissionId, mediaId: m.id }), () => {
+                        setRemoved((prev) => new Set(prev).add(m.id));
+                        if (openIndex !== null) show(null);
+                      });
                     }}
                   >
                     Delete
