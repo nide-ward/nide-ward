@@ -23,6 +23,7 @@ export const PERMISSIONS = {
   "insulin.edit": ALL,
   "drugs.edit": ALL,
   "patient.discharge": ALL,
+  "patient.transfer": ALL,
   "archive.readmit": ALL,
   "archive.delete": ALL,
   "roster.edit": ALL,

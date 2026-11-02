@@ -5,7 +5,10 @@ import Button from "@/components/arc/button/button";
 import { Input } from "@/components/arc/input/input";
 import { NumberField } from "@/components/arc/number-field/number-field";
 import { Textarea } from "@/components/arc/textarea/textarea";
+import FileDropzone from "@/components/arc/file-dropzone/file-dropzone";
+import { registerMedia } from "@/server/actions/media";
 import { admitPatient } from "@/server/actions/patients";
+import { uploadPhoto } from "@/lib/upload-client";
 import { parseABGSlipText, parseMeasurement } from "@/lib/clinical";
 import { normalizeNumericText } from "@/lib/numeric-input";
 import { fromCairoInputValue, toCairoInputValue } from "@/lib/time";
@@ -16,6 +19,7 @@ import { SlipScanner } from "./slip-scanner";
 import { regimenSummary } from "@/lib/insulin";
 import { useAction } from "./use-action";
 import { InlineError, Panel } from "./ui";
+import { useToast } from "./toast-provider";
 
 /** The prototype's admit window had these four tabs; here they are steps, saved together at the end. */
 const STEPS = ["Admission and info", "First blood gas", "Insulin and drugs", "Workup and plan"];
@@ -66,6 +70,8 @@ export interface AdmitFormProps {
   initialTime: string;
   /** Called after the patient is admitted. The caller closes the dialog or leaves the page, and shows the toast. */
   onDone: (admissionId: string) => void;
+  /** How lab photos reach storage: straight to the bucket (presigned) or through this app (proxy). */
+  uploadMode: "presigned" | "proxy";
   onCancel: () => void;
   /** True once anything has been entered, so the caller can confirm before discarding. */
   onDirtyChange?: (dirty: boolean) => void;
@@ -74,8 +80,10 @@ export interface AdmitFormProps {
   children?: ReactNode;
 }
 
-export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange, inDialog = false, children }: AdmitFormProps) {
+export function AdmitForm({ bedId, initialTime, uploadMode, onDone, onCancel, onDirtyChange, inDialog = false, children }: AdmitFormProps) {
   const { run, pending, error } = useAction();
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -104,11 +112,13 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
   const [labs, setLabs] = useState("");
   const [consults, setConsults] = useState("");
   const [plan, setPlan] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
 
   // Anything entered (other than the pre-filled time) counts as unsaved work.
   const dirty =
     [name, age, dx, risk, slip, labs, consults, plan, med.name, med.dose, med.frequency].some((v) => v.trim() !== "") ||
     abgEntered ||
+    photos.length > 0 ||
     meds.length > 0 ||
     ins.basal + ins.b + ins.l + ins.d > 0 ||
     when !== initialTime ||
@@ -141,6 +151,30 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
     setMeds((m) => [...m, { name: med.name.trim(), dose: med.dose.trim(), frequency: med.frequency.trim() }]);
     setMed({ name: "", dose: "", frequency: "" });
   };
+
+  /** Photos need the admission to exist, so they upload after it is saved. A failed photo never undoes the admission. */
+  async function attachPhotosThenFinish(admissionId: string) {
+    if (photos.length === 0) return onDone(admissionId);
+    // A queued offline admission has no real record yet, so its photos cannot be attached.
+    if (admissionId.startsWith("offline-")) {
+      toast("Photos not attached", "You are offline. Add them from the chart once the admission syncs.");
+      return onDone(admissionId);
+    }
+    setUploading(true);
+    let failed = 0;
+    for (const file of photos) {
+      try {
+        const { key, contentType } = await uploadPhoto({ admissionId, file, mode: uploadMode, onProgress: () => {}, signal: new AbortController().signal });
+        const res = await registerMedia({ admissionId, objectKey: key, contentType, originalName: file.name.slice(0, 120) });
+        if (!res.ok) failed += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setUploading(false);
+    if (failed > 0) toast(`${failed} photo${failed === 1 ? "" : "s"} not attached`, "The patient is admitted. Add them from the chart.");
+    onDone(admissionId);
+  }
 
   function save() {
     // Every field is optional. The only rules: age, when given, is whole years, and a blood gas needs its pH.
@@ -196,7 +230,7 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
 
     void run(
       () => admitPatient(admitPayload),
-      (r) => onDone(r.admissionId),
+      (r) => void attachPhotosThenFinish(r.admissionId),
       {
         type: "admitPatient",
         payload: admitPayload,
@@ -249,8 +283,8 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
           </label>
           <Input label="Primary diagnosis" value={dx} onChange={(e) => setDx(e.target.value)} maxLength={300} placeholder="Diabetic ketoacidosis (DKA)" />
           <div className="grid gap-2">
-            <RiskFactorChips value={risk} onChange={setRisk} />
             <Textarea label="Risk factors and comorbidities" value={risk} onChange={(e) => setRisk(e.target.value)} rows={2} maxLength={RISK_FACTORS_MAX} />
+            <RiskFactorChips value={risk} onChange={setRisk} />
           </div>
         </div>
       )}
@@ -398,11 +432,26 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
             <p>{abgEntered ? `First blood gas, pH ${abg.ph || "--"}` : "No blood gas yet"}</p>
             <p className="tnum">{regimenSummary({ basalUnits: ins.basal, breakfastUnits: ins.b, lunchUnits: ins.l, dinnerUnits: ins.d })}</p>
             <p>{meds.length + (med.name.trim() ? 1 : 0)} other drug{meds.length + (med.name.trim() ? 1 : 0) === 1 ? "" : "s"}</p>
-            <p className="text-text-secondary">Lab photos can be attached from the chart once the patient is admitted.</p>
+            <p>{photos.length} lab photo{photos.length === 1 ? "" : "s"}</p>
           </div>
         </div>
         </Panel>
       )}
+
+      {/* Kept mounted (only hidden) so the chosen photos survive moving between steps. */}
+      <div hidden={step !== 3}>
+        <Panel hue="sky" title="Lab photos" description="Compressed on this device, then uploaded when the patient is admitted.">
+          <FileDropzone
+            accept="image/*,.jpg,.jpeg,.png,.webp"
+            multiple
+            maxFiles={6}
+            maxSize={25 * 1024 * 1024}
+            label="Add lab photos"
+            description="Take a photo or choose images from this device"
+            onFilesChange={setPhotos}
+          />
+        </Panel>
+      </div>
 
       <InlineError>{localError ?? error}</InlineError>
       </div>
@@ -423,12 +472,12 @@ export function AdmitForm({ bedId, initialTime, onDone, onCancel, onDirtyChange,
             Cancel
           </Button>
         )}
-        <Button type="submit" loading={pending}>
+        <Button type="submit" loading={pending || uploading}>
           {last ? "Admit patient" : step === 1 && !abgEntered ? "Skip for now" : "Next"}
         </Button>
         {!last && (
           // Nothing is required, so a bed can be admitted from any step.
-          <Button type="button" variant="ghost" loading={pending} onClick={save}>
+          <Button type="button" variant="ghost" loading={pending || uploading} onClick={save}>
             Admit now
           </Button>
         )}

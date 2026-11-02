@@ -28,6 +28,26 @@ export interface BoardWard {
   beds: BoardBed[];
 }
 
+export interface FreeBedWard {
+  id: string;
+  title: string;
+  beds: { id: string; name: string; type: BoardBed["type"] }[];
+}
+
+/** Floors that have at least one unoccupied bed, with those beds. */
+export async function getFreeBeds(): Promise<FreeBedWard[]> {
+  const db = getReadDb();
+  const [wards, beds, active] = await Promise.all([
+    db.select().from(ward).orderBy(asc(ward.sortOrder)),
+    db.select().from(bed).orderBy(asc(bed.sortOrder)),
+    db.select({ bedId: admission.bedId }).from(admission).where(eq(admission.status, "active")),
+  ]);
+  const taken = new Set(active.map((a) => a.bedId));
+  return wards
+    .map((w) => ({ id: w.id, title: w.title, beds: beds.filter((b) => b.wardId === w.id && !taken.has(b.id)).map((b) => ({ id: b.id, name: b.name, type: b.type })) }))
+    .filter((w) => w.beds.length > 0);
+}
+
 /** All wards and beds with current occupancy, latest ABG, basal dose and photo count. */
 export async function getBoard(): Promise<BoardWard[]> {
   const db = getReadDb();

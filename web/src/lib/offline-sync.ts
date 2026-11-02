@@ -3,6 +3,7 @@
 import {
   admitPatient,
   dischargePatient,
+  transferPatient,
   recordBedside,
   updateChart,
   saveInsulin,
@@ -24,6 +25,7 @@ export type OfflineActionType =
   | "addMedication"
   | "removeMedication"
   | "dischargePatient"
+  | "transferPatient"
   | "saveRoster";
 
 export interface QueuedAction {
@@ -183,6 +185,9 @@ async function executeAction(item: QueuedAction): Promise<boolean> {
         break;
       case "dischargePatient":
         res = await dischargePatient(item.payload);
+        break;
+      case "transferPatient":
+        res = await transferPatient(item.payload);
         break;
       case "saveRoster":
         res = await saveRoster(item.payload);

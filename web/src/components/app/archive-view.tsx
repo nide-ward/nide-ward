@@ -11,6 +11,7 @@ import { HUE, outcomeHue } from "@/lib/hues";
 import { NO_DIAGNOSIS, ageText, isBlank } from "@/lib/display";
 import { deleteArchivedAdmission } from "@/server/actions/patients";
 import type { ClinicalRole } from "@/lib/permissions";
+import { PrintPatientButton } from "./print-frame-buttons";
 import { PatientDialog } from "./patient-dialog";
 import { useAction } from "./use-action";
 import { InlineError, Pill } from "./ui";
@@ -130,9 +131,9 @@ export function ArchiveView({
         key: "print",
         label: "Print",
         render: (_v, r) => (
-          <Link href={`/print/patient/${r.id}`} target="_blank" className="underline-offset-2 hover:underline">
+          <PrintPatientButton admissionId={r.id} patientName={r.patient} className="underline-offset-2 hover:underline">
             Print record
-          </Link>
+          </PrintPatientButton>
         ),
       },
     ];
@@ -191,13 +192,13 @@ export function ArchiveView({
                   )}
                 </Link>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-1.5">
-                  <Link
-                    href={`/print/patient/${r.id}`}
-                    target="_blank"
+                  <PrintPatientButton
+                    admissionId={r.id}
+                    patientName={r.patient}
                     className="inline-flex min-h-11 touch-manipulation items-center text-sm font-medium text-text-secondary underline-offset-2 hover:text-foreground hover:underline"
                   >
                     Print record
-                  </Link>
+                  </PrintPatientButton>
                   {canDelete && <DeleteArchiveButton admissionId={r.id} patient={r.patient} />}
                 </div>
               </li>

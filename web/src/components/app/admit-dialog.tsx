@@ -24,7 +24,7 @@ export interface AdmitTarget {
  * The form keeps its state while open; closing with anything entered asks first, so a stray tap outside the
  * dialog never throws away a half-filled admission.
  */
-export function AdmitDialog({ target, onClose }: { target: AdmitTarget | null; onClose: () => void }) {
+export function AdmitDialog({ target, uploadMode, onClose }: { target: AdmitTarget | null; uploadMode: "presigned" | "proxy"; onClose: () => void }) {
   const { toast } = useToast();
   const [dirty, setDirty] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -67,6 +67,7 @@ export function AdmitDialog({ target, onClose }: { target: AdmitTarget | null; o
           <AdmitForm
             bedId={target.bedId}
             initialTime={target.openedAt}
+            uploadMode={uploadMode}
             inDialog
             onDirtyChange={setDirty}
             onCancel={requestClose}
@@ -104,13 +105,14 @@ export function AdmitDialog({ target, onClose }: { target: AdmitTarget | null; o
 }
 
 /** The same form on its own page, for direct links to /beds/<id>/admit. Done and Cancel both return to the board. */
-export function AdmitPageForm({ bedId, bedName, initialTime }: { bedId: string; bedName: string; initialTime: string }) {
+export function AdmitPageForm({ bedId, bedName, initialTime, uploadMode }: { bedId: string; bedName: string; initialTime: string; uploadMode: "presigned" | "proxy" }) {
   const router = useRouter();
   const { toast } = useToast();
   return (
     <AdmitForm
       bedId={bedId}
       initialTime={initialTime}
+      uploadMode={uploadMode}
       onCancel={() => router.push("/")}
       onDone={() => {
         toast(`Patient admitted to ${bedName}`);

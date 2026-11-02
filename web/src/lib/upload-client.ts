@@ -1,8 +1,12 @@
 "use client";
 
-const MAX_DIM = 1600;
+const MAX_DIM = 1400;
+/** Lab slips stay legible well below this size, so quality steps down until a photo fits, which keeps storage small and photos quick to open. */
+const TARGET_BYTES = 250 * 1024;
+const WEBP_QUALITIES = [0.78, 0.68, 0.58, 0.5];
+const JPEG_QUALITIES = [0.8, 0.7, 0.6, 0.5];
 
-/** Resize to at most 1600 px and encode as WebP (JPEG where the browser cannot encode WebP). */
+/** Resize to at most 1400 px and encode as WebP (JPEG where the browser cannot encode WebP), lowering quality until it is about 250 KB or less. */
 export async function compressImage(file: File): Promise<{ blob: Blob; contentType: "image/webp" | "image/jpeg" }> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, MAX_DIM / Math.max(bitmap.width, bitmap.height));
@@ -16,9 +20,19 @@ export async function compressImage(file: File): Promise<{ blob: Blob; contentTy
   ctx.drawImage(bitmap, 0, 0, w, h);
   bitmap.close();
   const toBlob = (type: string, q: number) => new Promise<Blob | null>((res) => canvas.toBlob(res, type, q));
-  const webp = await toBlob("image/webp", 0.8);
-  if (webp && webp.type === "image/webp") return { blob: webp, contentType: "image/webp" };
-  const jpeg = await toBlob("image/jpeg", 0.82);
+  const smallest = async (type: "image/webp" | "image/jpeg", qualities: number[]) => {
+    let best: Blob | null = null;
+    for (const q of qualities) {
+      const blob = await toBlob(type, q);
+      if (!blob || blob.type !== type) return null;
+      best = blob;
+      if (blob.size <= TARGET_BYTES) break;
+    }
+    return best;
+  };
+  const webp = await smallest("image/webp", WEBP_QUALITIES);
+  if (webp) return { blob: webp, contentType: "image/webp" };
+  const jpeg = await smallest("image/jpeg", JPEG_QUALITIES);
   if (!jpeg) throw new Error("Could not compress that image.");
   return { blob: jpeg, contentType: "image/jpeg" };
 }
