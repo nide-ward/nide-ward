@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
       { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
     ];
     return [
-      // The board prints the census through a hidden same-origin frame, so the print pages may be framed by this site.
+      // The PDF download renders the print pages in a hidden same-origin frame, so the print pages may be framed by this site.
       { source: "/print/:kind(census|patient/[^/]+)", headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }, ...common] },
       {
         source: "/:path((?!print/(?:census|patient/[^/]+)$).*)",

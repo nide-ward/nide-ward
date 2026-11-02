@@ -124,7 +124,7 @@ function Inner(p: ChartViewProps & { epoch: number }) {
           </p>
         </div>
         <div className="flex w-full items-center gap-1.5 sm:w-auto sm:gap-2">
-          <PrintPatientButton admissionId={p.admissionId} patientName={p.overview.patientName} variant="secondary" className={ACTION_BUTTON} title="Print the patient chart (or save as PDF)">
+          <PrintPatientButton admissionId={p.admissionId} patientName={p.overview.patientName} variant="secondary" className={ACTION_BUTTON} title="Download the patient chart as a PDF">
             <FileText size={15} className="mr-1 inline" aria-hidden="true" />
             Print PDF
           </PrintPatientButton>
