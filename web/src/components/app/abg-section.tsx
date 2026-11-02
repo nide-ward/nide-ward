@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Button from "@/components/arc/button/button";
 import { Input } from "@/components/arc/input/input";
 import { Select } from "@/components/arc/select/select";
@@ -14,7 +14,11 @@ import {
   calculateABGStatus,
   parseABGSlipText,
   parseMeasurement,
+  rangeStatus,
+  readingDirections,
   shiftSummaryLine,
+  type Direction,
+  type TrendParam,
   type AbgEntry,
 } from "@/lib/clinical";
 import { normalizeNumericText } from "@/lib/numeric-input";
@@ -38,13 +42,27 @@ export const slotLabel = (h: number) => `${String(h % 12 || 12).padStart(2, "0")
 
 export { EMPTY, FIELDS, type FieldKey } from "./abg-fields";
 
-/** Arrow for an abnormal value, with a screen reader word, so the colour is never the only signal. */
-function Flag({ word }: { word: "low" | "high" }) {
+const STATUS_TONE = { low: "text-hue-rose-ink", high: "text-hue-rose-ink", normal: "text-hue-emerald-ink" } as const;
+const ARROW = { up: " \u2191", down: " \u2193" } as const;
+const DIRECTION_WORD = { up: "up from the previous reading", down: "down from the previous reading" } as const;
+
+/**
+ * A value coloured by where it sits against its normal range (green normal, red outside it), followed by an arrow
+ * for which way it moved since the previous reading. The first reading has nothing to compare with, so no arrow.
+ */
+function Reading({ param, value, direction }: { param: TrendParam; value: number | null | undefined; direction?: Direction }) {
+  const status = rangeStatus(param, value);
   return (
-    <>
-      <span aria-hidden="true">{word === "low" ? " \u2193" : " \u2191"}</span>
-      <span className="sr-only"> ({word})</span>
-    </>
+    <span className={status ? STATUS_TONE[status] : undefined}>
+      {fmtNum(value)}
+      {status && status !== "normal" && <span className="sr-only"> ({status})</span>}
+      {direction && (
+        <>
+          <span aria-hidden="true">{ARROW[direction]}</span>
+          <span className="sr-only"> ({DIRECTION_WORD[direction]})</span>
+        </>
+      )}
+    </span>
   );
 }
 
@@ -245,6 +263,7 @@ function ReadingsTable({ rows }: { rows: AbgRowData[] }) {
   const { run, pending, error } = useAction();
   const canDelete = chart.allowed("abg.delete");
   if (rows.length === 0) return <p className="text-sm text-text-secondary">No blood gas records logged yet.</p>;
+  const directions = readingDirections(rows);
   const onDelete = (r: AbgRowData) => {
     if (window.confirm("Delete this reading? It stays in the audit log.")) {
       const delPayload = { admissionId: chart.admissionId, abgId: r.id };
@@ -263,27 +282,26 @@ function ReadingsTable({ rows }: { rows: AbgRowData[] }) {
     <div className="grid gap-2">
       {/* Phone: newest first, one card per reading, protocol values (pH, HCO3, AG) up front. */}
       <ul className="grid gap-2 sm:hidden" aria-label="Serial blood gas readings, newest first">
-        {[...rows].reverse().map((r) => {
+        {rows.map((r, i) => ({ r, t: directions[i] })).reverse().map(({ r, t }) => {
           const a = analyzeABG(r);
           const when = toCairoInputValue(r.takenAt).replace("T", " ");
-          const rest: [string, string][] = [
-            ["pCO2", fmtNum(r.pco2)],
-            ["Winter's", a && a.wintersMin !== null ? `${a.wintersMin}-${a.wintersMax}` : "--"],
-            ["RBG", fmtNum(r.rbg)],
-            ["K", fmtNum(r.k)],
-            ["Na", fmtNum(r.na)],
-            ["pO2", fmtNum(r.po2)],
-            ["Hb", fmtNum(r.hb)],
+          const rest: [string, ReactNode][] = [
+            ["pCO2", <Reading key="pco2" param="pco2" value={r.pco2} />],
+            ["RBG", <Reading key="rbg" param="rbg" value={r.rbg} />],
+            ["K", <Reading key="k" param="k" value={r.k} />],
+            ["Na", <Reading key="na" param="na" value={r.na} />],
+            ["pO2", <Reading key="po2" param="po2" value={r.po2} />],
+            ["Hb", <Reading key="hb" param="hb" value={r.hb} />],
           ];
           return (
             <li
               key={r.id}
-              className={`tnum rounded-xl border p-3 ${
+              className={`tnum rounded-xl border p-3 shadow-xs ${
                 (r.ph !== null && r.ph !== undefined && r.ph < 7.35) || (r.hco3 !== null && r.hco3 !== undefined && r.hco3 < 18)
                   ? "border-hue-rose-line bg-hue-rose-soft"
                   : a?.isHighAG
                     ? "border-hue-amber-line bg-hue-amber-soft"
-                    : "border-border"
+                    : "border-border-strong bg-surface"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -297,18 +315,18 @@ function ReadingsTable({ rows }: { rows: AbgRowData[] }) {
               <dl className="mt-1 grid grid-cols-3 gap-2">
                 <div>
                   <dt className="text-xs text-text-secondary">pH</dt>
-                  <dd className={`text-lg font-medium ${r.ph !== null && r.ph !== undefined && r.ph < 7.35 ? "text-hue-rose-ink" : ""}`}>{fmtNum(r.ph)}{r.ph !== null && r.ph !== undefined && r.ph < 7.35 && <Flag word="low" />}</dd>
+                  <dd className="text-lg font-medium"><Reading param="ph" value={r.ph} direction={t.ph} /></dd>
                 </div>
                 <div>
                   <dt className="text-xs text-text-secondary">HCO3</dt>
-                  <dd className={`text-lg font-medium ${r.hco3 !== null && r.hco3 !== undefined && r.hco3 < 18 ? "text-hue-rose-ink" : ""}`}>{fmtNum(r.hco3)}{r.hco3 !== null && r.hco3 !== undefined && r.hco3 < 18 && <Flag word="low" />}</dd>
+                  <dd className="text-lg font-medium"><Reading param="hco3" value={r.hco3} direction={t.hco3} /></dd>
                 </div>
                 <div>
                   <dt className="text-xs text-text-secondary">AG</dt>
-                  <dd className={`text-lg font-medium ${a?.isHighAG ? "text-hue-amber-ink" : ""}`}>{a && a.ag !== null ? a.ag : "--"}{a?.isHighAG && <Flag word="high" />}</dd>
+                  <dd className="text-lg font-medium"><Reading param="ag" value={a?.ag} /></dd>
                 </div>
               </dl>
-              <dl className="mt-2 grid grid-cols-3 min-[420px]:grid-cols-4 gap-x-2 gap-y-1.5 text-sm">
+              <dl className="mt-2 grid grid-cols-3 gap-x-2 gap-y-1.5 text-sm">
                 {rest.map(([k, v]) => (
                   <div key={k}>
                     <dt className="text-xs text-text-secondary">{k}</dt>
@@ -325,7 +343,7 @@ function ReadingsTable({ rows }: { rows: AbgRowData[] }) {
           <caption className="sr-only">Serial blood gas readings, oldest first</caption>
           <thead className="bg-surface-muted text-text-secondary">
             <tr>
-              {["Time (Cairo)", "pH", "pCO2", "HCO3", "AG", "Winter's", "RBG", "K", "Na", "pO2", "Hb", ""].map((h, i) => (
+              {["Time (Cairo)", "pH", "pCO2", "HCO3", "AG", "RBG", "K", "Na", "pO2", "Hb", ""].map((h, i) => (
                 <th key={i} scope="col" className="whitespace-nowrap px-3 py-2 font-medium">
                   {h || <span className="sr-only">Actions</span>}
                 </th>
@@ -333,21 +351,21 @@ function ReadingsTable({ rows }: { rows: AbgRowData[] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => {
+            {rows.map((r, i) => {
               const a = analyzeABG(r);
+              const t = directions[i];
               return (
                 <tr key={r.id} className="border-t border-border">
                   <td className="whitespace-nowrap px-3 py-2">{toCairoInputValue(r.takenAt).replace("T", " ")}</td>
-                  <td className={`px-3 py-2 font-medium ${r.ph !== null && r.ph !== undefined && r.ph < 7.35 ? "text-hue-rose-ink" : ""}`}>{fmtNum(r.ph)}{r.ph !== null && r.ph !== undefined && r.ph < 7.35 && <Flag word="low" />}</td>
-                  <td className="px-3 py-2">{fmtNum(r.pco2)}</td>
-                  <td className={`px-3 py-2 font-medium ${r.hco3 !== null && r.hco3 !== undefined && r.hco3 < 18 ? "text-hue-rose-ink" : ""}`}>{fmtNum(r.hco3)}{r.hco3 !== null && r.hco3 !== undefined && r.hco3 < 18 && <Flag word="low" />}</td>
-                  <td className={`px-3 py-2 ${a?.isHighAG ? "text-hue-amber-ink" : ""}`}>{a && a.ag !== null ? a.ag : "--"}{a?.isHighAG && <Flag word="high" />}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-text-secondary">{a && a.wintersMin !== null ? `${a.wintersMin}-${a.wintersMax}` : "--"}</td>
-                  <td className="px-3 py-2">{fmtNum(r.rbg)}</td>
-                  <td className="px-3 py-2">{fmtNum(r.k)}</td>
-                  <td className="px-3 py-2">{fmtNum(r.na)}</td>
-                  <td className="px-3 py-2">{fmtNum(r.po2)}</td>
-                  <td className="px-3 py-2">{fmtNum(r.hb)}</td>
+                  <td className="px-3 py-2 font-medium"><Reading param="ph" value={r.ph} direction={t.ph} /></td>
+                  <td className="px-3 py-2"><Reading param="pco2" value={r.pco2} /></td>
+                  <td className="px-3 py-2 font-medium"><Reading param="hco3" value={r.hco3} direction={t.hco3} /></td>
+                  <td className="px-3 py-2"><Reading param="ag" value={a?.ag} /></td>
+                  <td className="px-3 py-2"><Reading param="rbg" value={r.rbg} /></td>
+                  <td className="px-3 py-2"><Reading param="k" value={r.k} /></td>
+                  <td className="px-3 py-2"><Reading param="na" value={r.na} /></td>
+                  <td className="px-3 py-2"><Reading param="po2" value={r.po2} /></td>
+                  <td className="px-3 py-2"><Reading param="hb" value={r.hb} /></td>
                   <td className="px-3 py-2 text-right">
                     {canDelete && (
                       <Button

@@ -4,7 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { deleteObject } from "@/lib/storage";
 import { requireStaff } from "@/lib/session";
-import { getAdmissionDetail } from "../queries";
+import { getAdmissionDetail, getFreeBeds } from "../queries";
 import {
   addMedicationSchema,
   admitSchema,
@@ -15,6 +15,7 @@ import {
   insulinSchema,
   readmitSchema,
   removeMedicationSchema,
+  transferSchema,
 } from "@/lib/validation";
 import { ActionError, audit, guardedUpdate, requireActiveAdmission, runAction, type ActionResult } from "../action";
 
@@ -193,6 +194,40 @@ export async function dischargePatient(raw: unknown): Promise<ActionResult> {
       await audit(tx, staff, "admission.discharge", "admission", input.admissionId, before, after);
     }),
   );
+}
+
+/** Move an active patient to a free bed, on the same or another floor. */
+export async function transferPatient(raw: unknown): Promise<ActionResult<{ bedName: string; wardTitle: string }>> {
+  return runAction("patient.transfer", transferSchema, raw, async ({ staff, input, db }) =>
+    db.transaction(async (tx) => {
+      const [target] = await tx
+        .select({ id: bed.id, name: bed.name, wardId: bed.wardId, wardTitle: schema.ward.title })
+        .from(bed)
+        .innerJoin(schema.ward, eq(schema.ward.id, bed.wardId))
+        .where(eq(bed.id, input.bedId));
+      if (!target) throw new ActionError("not_found", "That bed does not exist.");
+      const [current] = await tx
+        .select({ wardId: bed.wardId })
+        .from(admission)
+        .innerJoin(bed, eq(bed.id, admission.bedId))
+        .where(eq(admission.id, input.admissionId));
+      if (current && current.wardId === target.wardId) throw new ActionError("invalid_state", "The patient is already on that floor.");
+      const [occupied] = await tx
+        .select({ id: admission.id })
+        .from(admission)
+        .where(and(eq(admission.bedId, input.bedId), eq(admission.status, "active")));
+      if (occupied) throw new ActionError("conflict", "That bed is already occupied. Pick another bed.");
+      const { before, after } = await guardedUpdate(tx, input.admissionId, input.version, { bedId: input.bedId });
+      await audit(tx, staff, "admission.transfer", "admission", input.admissionId, before, after);
+      return { bedName: target.name, wardTitle: target.wardTitle };
+    }),
+  );
+}
+
+/** Free beds grouped by floor, for the transfer picker. */
+export async function getFreeBedsAction() {
+  await requireStaff();
+  return getFreeBeds();
 }
 
 /** Re-admit an archived patient to their original bed (prototype "Re-admit"). The bed must be free. */

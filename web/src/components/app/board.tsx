@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { PrintCensusButton } from "@/components/app/print-frame-buttons";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { FileText, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import EmptyState from "@/components/arc/empty-state/empty-state";
 import { SearchField } from "@/components/arc/search-field/search-field";
-import { analyzeABG } from "@/lib/clinical";
 import { NO_DIAGNOSIS, ageText, isBlank, patientLabel } from "@/lib/display";
 import { BED_TYPE_HUE, HUE, wardHue } from "@/lib/hues";
 import { toCairoInputValue } from "@/lib/time";
@@ -36,7 +36,6 @@ function BedCard({ bed, ward, onOpenPatient }: CardProps) {
   if (!a) return null;
 
   const latest = a.latestAbg;
-  const analysis = analyzeABG(latest);
   const nameBlank = isBlank(a.patientName);
   const who = patientLabel(a.patientName);
 
@@ -72,23 +71,14 @@ function BedCard({ bed, ward, onOpenPatient }: CardProps) {
                 HCO3 <b className="font-bold">{latest.hco3 ?? "--"}</b>
               </span>
               <span>
-                AG <b className={`font-bold ${analysis?.isHighAG ? "text-amber-600 dark:text-amber-400" : ""}`}>{analysis && analysis.ag !== null ? analysis.ag : "--"}</b>
+                K <b className="font-bold">{latest.k ?? "--"}</b>
               </span>
             </div>
           )}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-1">
-          <Pill hue="purple">Lantus {a.basalUnits}U</Pill>
           {a.mediaCount > 0 && <Pill hue="cyan">{a.mediaCount} lab photo{a.mediaCount === 1 ? "" : "s"}</Pill>}
-        </div>
-
-        <div className="border-t border-border/50 pt-2 flex items-center justify-between text-xs font-semibold">
-          <span className="flex items-center gap-1.5 text-text-secondary">
-            <span aria-hidden="true" className={`size-2 rounded-full ${h.dot}`} />
-            Occupied
-          </span>
-          <span className="text-teal-600 font-bold hover:text-teal-700 flex items-center gap-0.5">Chart &rarr;</span>
         </div>
       </div>
     </Link>
@@ -203,15 +193,7 @@ export function Board({ wards, role, uploadMode }: { wards: BoardWard[]; role: C
               <span>{firstFreeBed ? "Admit patient" : "Full capacity"}</span>
             </button>
           )}
-          <Link
-            href="/print/census"
-            target="_blank"
-            className={HEADER_ACTION}
-            title="Print entire inpatient census from all floors"
-          >
-            <FileText size={16} aria-hidden="true" className="shrink-0" />
-            <span>Print all floors</span>
-          </Link>
+          <PrintCensusButton className={HEADER_ACTION} />
         </div>
       </div>
 
@@ -258,7 +240,7 @@ export function Board({ wards, role, uploadMode }: { wards: BoardWard[]; role: C
           </div>
         );
       })}
-      {canAdmit && <AdmitDialog target={admitTarget} onClose={closeAdmit} />}
+      {canAdmit && <AdmitDialog target={admitTarget} uploadMode={uploadMode} onClose={closeAdmit} />}
       {activePatientId && (
         <PatientDialog
           admissionId={activePatientId}

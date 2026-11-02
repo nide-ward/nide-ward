@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Alert from "@/components/arc/alert/alert";
 import Button from "@/components/arc/button/button";
 import HoldToConfirm from "@/components/arc/hold-to-confirm/hold-to-confirm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/arc/tabs/tabs";
 import { outcomeHue, wardHue, HUE } from "@/lib/hues";
+import { PrintPatientButton } from "./print-frame-buttons";
 import { NO_DIAGNOSIS, ageText, isBlank, patientLabel } from "@/lib/display";
 import { deleteArchivedAdmission, readmitPatient } from "@/server/actions/patients";
 import { can, type ClinicalRole } from "@/lib/permissions";
@@ -14,7 +14,7 @@ import { formatCairo } from "@/lib/time";
 import { AbgSection, type AbgRowData } from "./abg-section";
 import { ChartProvider, useChart } from "./chart-context";
 import { DischargeDialog } from "./discharge-dialog";
-import { TransferToIcuDialog } from "./transfer-icu-dialog";
+import { TransferDialog } from "./transfer-dialog";
 import { DrugsSection, type MedRow } from "./drugs-section";
 import { FileText } from "lucide-react";
 import { InsulinSection, type InsulinData } from "./insulin-section";
@@ -123,20 +123,15 @@ function Inner(p: ChartViewProps & { epoch: number }) {
             {isBlank(p.overview.diagnosis) ? <span className="text-text-muted">{NO_DIAGNOSIS}</span> : p.overview.diagnosis}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/print/patient/${p.admissionId}`}
-            target="_blank"
-            className="inline-flex min-h-11 touch-manipulation items-center gap-1.5 rounded-xl border border-border-strong px-3 py-1.5 text-xs font-semibold hover:bg-surface-muted transition sm:min-h-9"
-            title="Open printable handover report (save as PDF)"
-          >
-            <FileText size={14} aria-hidden="true" className="shrink-0" />
-            <span>Print PDF / Handover</span>
-          </Link>
+        <div className="flex w-full items-center gap-1.5 sm:w-auto sm:gap-2">
+          <PrintPatientButton admissionId={p.admissionId} patientName={p.overview.patientName} variant="secondary" className={ACTION_BUTTON} title="Print the patient chart (or save as PDF)">
+            <FileText size={15} className="mr-1 inline" aria-hidden="true" />
+            Print PDF
+          </PrintPatientButton>
           {!p.discharged && (
             <>
-              <TransferToIcuDialog patientName={p.overview.patientName} bedName={p.bedName} />
-              <DischargeDialog patientName={p.overview.patientName} bedName={p.bedName} />
+              <TransferDialog patientName={p.overview.patientName} bedName={p.bedName} wardId={p.wardId} className={ACTION_BUTTON} />
+              <DischargeDialog patientName={p.overview.patientName} bedName={p.bedName} className={ACTION_BUTTON} />
             </>
           )}
         </div>
@@ -182,6 +177,9 @@ function Inner(p: ChartViewProps & { epoch: number }) {
     </div>
   );
 }
+
+/** The three header actions share the row equally on phones and size to their label from `sm`. */
+const ACTION_BUTTON = "min-w-0 flex-1 cursor-pointer px-2! sm:flex-none sm:px-4!";
 
 export function ChartView(props: ChartViewProps) {
   return (

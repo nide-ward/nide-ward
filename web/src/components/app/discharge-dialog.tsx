@@ -15,7 +15,7 @@ import { useAction } from "./use-action";
 import { InlineError } from "./ui";
 import { useToast } from "./toast-provider";
 
-export function DischargeDialog({ patientName, bedName }: { patientName: string; bedName: string }) {
+export function DischargeDialog({ patientName, bedName, className }: { patientName: string; bedName: string; className?: string }) {
   const chart = useChart();
   const who = patientLabel(patientName, bedName);
   const router = useRouter();
@@ -30,7 +30,10 @@ export function DischargeDialog({ patientName, bedName }: { patientName: string;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="danger">Discharge patient</Button>
+        <Button variant="danger" className={className}>
+          <span className="sm:hidden">Discharge</span>
+          <span className="hidden sm:inline">Discharge patient</span>
+        </Button>
       </DialogTrigger>
       <DialogContent
         className="sheet-form-dialog"

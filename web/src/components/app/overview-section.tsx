@@ -89,8 +89,8 @@ function ChartForm({ data }: { data: OverviewData }) {
       </label>
       <Input label="Primary diagnosis" value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} maxLength={300} />
       <div className="grid gap-2">
-        <RiskFactorChips value={risk} onChange={setRisk} />
         <Textarea label="Risk factors and comorbidities" value={risk} onChange={(e) => setRisk(e.target.value)} rows={2} maxLength={RISK_FACTORS_MAX} />
+        <RiskFactorChips value={risk} onChange={setRisk} />
       </div>
       <InlineError>{localError ?? error}</InlineError>
       {conflict && <p className="text-sm text-text-secondary">Use the banner above to load the latest chart, then repeat your edit.</p>}

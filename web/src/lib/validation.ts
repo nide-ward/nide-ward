@@ -146,6 +146,12 @@ export const dischargeSchema = z.object({
   notes: text(3000).default(""),
 });
 
+export const transferSchema = z.object({
+  admissionId: z.uuid(),
+  version: z.number().int().min(1),
+  bedId: z.string().min(1).max(20),
+});
+
 export const themeSchema = z.object({ theme: z.enum(THEMES) });
 
 export const readmitSchema = z.object({ admissionId: z.uuid() });

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { AdmitPageForm } from "@/components/app/admit-dialog";
 import { Panel } from "@/components/app/ui";
+import { uploadMode } from "@/lib/env";
 import { requireStaff } from "@/lib/session";
 import { toCairoInputValue } from "@/lib/time";
 import { getActiveAdmissionIdForBed, getBed } from "@/server/queries";
@@ -25,7 +26,7 @@ export default async function AdmitPage({ params }: { params: Promise<{ bedId: s
         <p className="text-text-secondary">{found.ward.title}. Everything is optional.</p>
       </div>
       <Panel>
-        <AdmitPageForm bedId={bedId} bedName={found.bed.name} initialTime={toCairoInputValue(new Date())} />
+        <AdmitPageForm bedId={bedId} bedName={found.bed.name} initialTime={toCairoInputValue(new Date())} uploadMode={uploadMode()} />
       </Panel>
     </div>
   );
